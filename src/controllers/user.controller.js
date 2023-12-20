@@ -3,27 +3,15 @@ import { APIError } from "../utils/APIError.js"
 import { User } from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIResponse } from "../utils/APIResponse.js"
+import fs from "fs"
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, username, password } = req.body;
 
     if (
-        [fullName, email, username, password].some((field) =>
-            field.trim() === ""
-        )
+        [fullName, email, username, password].some((field) => field.trim() === "")
     ) {
         throw new APIError(400, "All fields are required")
-    }
-
-    const existedUser = await User.findOne(
-        {
-            $or: [{ username }, { email }]
-        }
-    )
-
-    if (existedUser) {
-        throw new APIError(409,
-            "User exists, email and username exists")
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -35,6 +23,18 @@ const registerUser = asyncHandler(async (req, res) => {
     if (req.files && Array.isArray(req.files.coverImage)
         && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files.coverImage[0].path
+    }
+
+    const existedUser = await User.findOne(
+        {
+            $or: [{ username }, { email }]
+        }
+    )
+
+    if (existedUser) {
+        fs.unlinkSync(avatarLocalPath)
+        fs.unlinkSync(coverImageLocalPath)
+        throw new APIError(409, "User exists, email and username exists")
     }
 
     if (!avatarLocalPath) {
