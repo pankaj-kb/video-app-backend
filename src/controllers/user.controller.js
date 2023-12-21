@@ -5,8 +5,27 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import fs from "fs"
 
+
+const generateAccessAndRefreshTokens = async (userId) => {
+    try {
+        const user = await User.findById(userId)
+
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false })
+
+        return { accessToken, refreshToken }
+
+    } catch (error) {
+        throw new APIError(500, "Something wrong with white Generating Refresha and access tokens.")
+    }
+}
+
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, username, password } = req.body;
+    // console.log(req.body)
 
     if (
         [fullName, email, username, password].some((field) => field.trim() === "")
@@ -15,6 +34,8 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
+
+    // console.log(req.files)
 
     // const coverImageLocalPath = req.files?.avatar[0]?.path;
 
@@ -57,6 +78,8 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase()
     })
 
+    // console.log(user);
+
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
@@ -71,6 +94,52 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 })
 
+const loginUser = asyncHandler(async (req, res) => {
+
+    const { email, username, password } = req.body;
+
+    if (!username || !email) {
+        throw new APIError(400, "username or email is required")
+    }
+
+    const user = await User.findOne({
+        $or: [{ username }, { email }]
+    })
+
+    if (!user) {
+        throw new APIError(401, "User does not exist, kindly check username or email")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if (!isPasswordValid) {
+        throw new APIError(404, "Password is incorrect")
+    }
+
+    const { accessToken, refreshToken } = await
+        generateAccessAndRefreshTokens(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new APIResponse(200, {
+                user: loggedInUser, accessToken, refreshToken
+            },
+                "User Logged in Successfully"
+            )
+        )
+})
+
 export {
     registerUser,
+    loginUser,
 }
