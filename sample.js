@@ -29,12 +29,42 @@
 
 
 
-String.prototype.truelength = function () {
-    console.log(this);
-    return this.trim().length;
+// String.prototype.truelength = function () {
+//     console.log(this);
+//     return this.trim().length;
+// }
+
+// var myName = "pankaj    ";
+// console.log(myName.length)
+
+// console.log(myName.truelength());
+
+
+class User {
+    constructor(username) {
+        this.username = username
+    }
+
+    logMe() {
+        console.log(`${this.username} is Logged in.`)
+    }
 }
+class Guest extends User {
+    constructor(username, email, password) {
+        super(username)
+        this.email = email
+        this.password = password
+    }
 
-var myName = "pankaj    ";
-console.log(myName.length)
+    printMe() {
+        console.log(
 
-console.log(myName.truelength());
+            `from function print me :-  username : ${this.username},
+             email : ${this.email},
+             password : ${this.password}`
+        );
+    }
+}
+const pankaj = new Guest("pankaj", "pan@kaj.com", "123bbab");
+// console.log(pankaj);
+pankaj.printMe();
