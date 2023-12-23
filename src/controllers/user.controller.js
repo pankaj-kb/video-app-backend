@@ -270,6 +270,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 })
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
+
     const avatarLocalPath = req.file?.path
 
     if (!avatarLocalPath) {
@@ -285,6 +286,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
+            $unset: {
+                avatar: req.user.avatar
+            },
             $set: {
                 avatar: avatar.url
             }
@@ -295,8 +299,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new APIResponse(200, user, "Avatar is updated successfully"))
-
-
 })
 
 const updateCoverImage = asyncHandler(async (req, res) => {
