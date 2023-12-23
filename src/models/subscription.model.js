@@ -11,7 +11,7 @@ const subscriptionSchema = new mongoose.Schema({
         ]
     },
     channel: {
-        tyep: [
+        type: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "User"
@@ -23,5 +23,6 @@ const subscriptionSchema = new mongoose.Schema({
     timestamps: true
 })
 
-export const Subscription = mongoose.model("Subscription",
-    subscriptionSchema)
+export const Subscription = mongoose.model
+    ("Subscription",
+        subscriptionSchema)
