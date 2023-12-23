@@ -317,6 +317,9 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
+            $unset: {
+                coverImage: req.user?.coverImage
+            },
             $set: {
                 coverImage: coverImage.url
             }
