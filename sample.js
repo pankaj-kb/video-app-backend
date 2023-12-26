@@ -40,31 +40,56 @@
 // console.log(myName.truelength());
 
 
-class User {
-    constructor(username) {
-        this.username = username
-    }
+// class User {
+//     constructor(username) {
+//         this.username = username
+//     }
 
-    logMe() {
-        console.log(`${this.username} is Logged in.`)
-    }
-}
-class Guest extends User {
-    constructor(username, email, password) {
-        super(username)
-        this.email = email
+//     logMe() {
+//         console.log(`${this.username} is Logged in.`)
+//     }
+// }
+// class Guest extends User {
+//     constructor(username, email, password) {
+//         super(username)
+//         this.email = email
+//         this.password = password
+//     }
+
+//     printMe() {
+//         console.log(
+
+//             `from function print me :-  username : ${this.username},
+//              email : ${this.email},
+//              password : ${this.password}`
+//         );
+//     }
+// }
+// const pankaj = new Guest("pankaj", "pan@kaj.com", "123bbab");
+// // console.log(pankaj);
+// pankaj.printMe();
+
+
+class User {
+    constructor(username, password) {
+        this.username = username
         this.password = password
     }
 
-    printMe() {
-        console.log(
+    get password() {
+        return `${this._password}pankaj222`.toUpperCase()
+    }
 
-            `from function print me :-  username : ${this.username},
-             email : ${this.email},
-             password : ${this.password}`
-        );
+    set password(value) {
+        this._password = value
     }
 }
-const pankaj = new Guest("pankaj", "pan@kaj.com", "123bbab");
-// console.log(pankaj);
-pankaj.printMe();
+
+// const pankaj = new User("pankajkb", "abd23hh22")
+
+const nayan = new User("nayanrai", "abscss")
+
+
+// console.log(pankaj)
+console.log(nayan.password);
+
