@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { APIError } from "../utils/APIError.js"
 import { User } from "../models/user.model.js"
+import { Subscription } from "../models/subscription.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import fs from "fs"
@@ -464,6 +465,34 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
 })
 
+const subscribeToChannel = asyncHandler(async (req, res) => {
+    const user = User.findById(req.user?._id)
+
+    if (!user) {
+        throw new APIError(400, "kindly login to subscribe")
+    }
+
+    const { channel } = req.params
+
+    if (!channel) {
+        throw new APIError(401, "Channel not found.")
+    }
+
+    // subscribe to channel
+
+    const subscriber = await Subscription.create({
+        subscriber: user,
+        channel: channel
+    })
+
+    if (!subscriber) {
+        throw new APIError(500,
+            "Something went wrong while subscribing to channel")
+    }
+
+    return res.status(201).json(new APIResponse(200, "User successfully subscribed to channel"))
+})
+
 export {
     registerUser,
     loginUser,
@@ -476,5 +505,5 @@ export {
     updateCoverImage,
     getUserChannelProfile,
     getWatchHistory,
-
+    subscribeToChannel
 }
