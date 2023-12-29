@@ -62,5 +62,4 @@ router.route("/subscribe").get(verifyJWT, subscribeToChannel)
 
 router.route("/unsubscribe").get(verifyJWT, unSubscribeToChannel)
 
-
 export default router
