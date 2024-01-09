@@ -161,7 +161,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         thumbnail: thumbnailFile.url,
         owner: req.user,
         isPublished: true
-    }).select("-api_key")
+    })
 
     if (!video) {
         throw new APIError(500, "Something went wrong while uplading the video")
