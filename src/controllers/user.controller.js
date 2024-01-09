@@ -28,7 +28,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, username, password } = req.body;
-    // console.log(req.body)
 
     if (
         [fullName, email, username, password].some((field) => field.trim() === "")
@@ -37,10 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-
-    // console.log(req.files)
-
-    // const coverImageLocalPath = req.files?.avatar[0]?.path;
 
     let coverImageLocalPath;
 
@@ -80,8 +75,6 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         username: username.toLowerCase()
     })
-
-    // console.log(user);
 
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
