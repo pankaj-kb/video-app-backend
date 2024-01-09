@@ -233,12 +233,15 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    // if (!req.user) {
-    //     throw new APIError(400, "No user found")
-    // }
+    if (!req.user) {
+        throw new APIError(400, "No user found")
+    }
+
+    const {_id, username, email} = req.user;
+
     return res
         .status(200)
-        .json(200, req.user, "Current user is fetched Successfully")
+        .json(new APIResponse(200, { _id, username, email }, "User Fetched Successfully."))
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {

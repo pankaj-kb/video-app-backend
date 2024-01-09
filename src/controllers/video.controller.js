@@ -1,8 +1,8 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
-import { APIError} from "../utils/ApiError.js"
-import { APIResponse} from "../utils/ApiResponse.js"
+import { APIError } from "../utils/ApiError.js"
+import { APIResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
@@ -52,6 +52,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
         }
 
     ])
+
+    if (allVideos.length === 0) {
+        return res
+            .status(400)
+            .json(new APIResponse(400, "No Videos Found."))
+    }
 
     return res
         .status(200)
@@ -130,14 +136,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new APIError(400, "kindly add title and description")
     }
 
-    const videoFilePath = req.files?.video[0]?.path;
-    const thumbnailPath = req.files?.thumbnail[0]?.path;
+    const videoFilePath = req.files?.videoFile[0]?.path;
+    const thumbnailFilePath = req.files?.thumbnailFile[0]?.path;
 
     // create alternate method to upload thumbnail or fetch it from cloudinary
 
     const videoFile = await uploadOnCloudinary(videoFilePath)
 
-    const thumbnailFile = await uploadOnCloudinary(thumbnailPath)
+    const thumbnailFile = await uploadOnCloudinary(thumbnailFilePath)
 
     if (!videoFile) {
         throw new APIError(400, "Video is not uploaded.")
@@ -152,10 +158,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
         description,
         videoFile: videoFile.url,
         time: videoFile.duration,
-        thumbnail: videoFile.thumbnail.url,
+        thumbnail: thumbnailFile.url,
         owner: req.user,
         isPublished: true
-    })
+    }).select("-api_key")
 
     if (!video) {
         throw new APIError(500, "Something went wrong while uplading the video")
