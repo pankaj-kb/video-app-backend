@@ -20,9 +20,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const allVideos = await Video.aggregate([
         {
             $match: {
-                title: {
-                    $regex: new RegExp(searchQuery, 'i')
+                $or: [{
+                    title: {
+                        $regex: new RegExp(searchQuery, 'i')
+                    }
+                },
+                {
+                    description: {
+                        $regex: new RegExp(searchQuery, 'i')
+                    }
                 }
+            ]
             }
         },
         {
@@ -44,13 +52,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
-        {
-            $addFields: {
-                owner: {
-                    $arrayElemAt: ["$owner", 0]
-                }
-            }
-        }
+        // {
+        //     $addFields: {
+        //         owner: {
+        //             $arrayElemAt: ["$owner", 0]
+        //         }
+        //     }
+        // }
 
     ])
 
@@ -75,7 +83,7 @@ const getAllVideosByUser = asyncHandler(async (req, res) => {
         throw new APIError(401, "Kindly add username");
     }
 
-    const checkUserExist = await User.findOne({username})
+    const checkUserExist = await User.findOne({ username })
 
     if (!checkUserExist) {
         throw new APIError(400, "User does not exist")
