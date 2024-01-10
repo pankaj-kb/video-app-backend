@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
     deleteVideo,
     getAllVideos,
+    getAllVideosByUser,
     getVideoById,
     publishAVideo,
     togglePublishStatus,
@@ -20,6 +21,8 @@ router.route("/").get(getAllVideos)
 // router.route("/").get((req,res) => {
 //     res.send("Video Route Working")
 // })
+
+router.route("/user-videos").get(getAllVideosByUser)
 
 router.route("/publish").post(
     upload.fields([

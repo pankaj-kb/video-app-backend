@@ -20,9 +20,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
     const allVideos = await Video.aggregate([
         {
             $match: {
-                title: {
-                    $regex: new RegExp(searchQuery, 'i')
+                $or: [{
+                    title: {
+                        $regex: new RegExp(searchQuery, 'i')
+                    }
+                },
+                {
+                    description: {
+                        $regex: new RegExp(searchQuery, 'i')
+                    }
                 }
+            ]
             }
         },
         {
@@ -44,13 +52,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
-        {
-            $addFields: {
-                owner: {
-                    $arrayElemAt: ["$owner", 0]
-                }
-            }
-        }
+        // {
+        //     $addFields: {
+        //         owner: {
+        //             $arrayElemAt: ["$owner", 0]
+        //         }
+        //     }
+        // }
 
     ])
 
@@ -65,16 +73,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
         .json(new APIResponse(200, allVideos, "all Videos fetched"));
 })
 
+// get all videos by the user without the query like the userpage
+
 const getAllVideosByUser = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+    const { page = 1, limit = 10, sortBy, sortType, username } = req.query
 
-    const searchQuery = query;
-
-    if (userId.length === 0) {
-        throw new APIError(401, "kindly add userId")
+    if (!username || username.trim() === "") {
+        console.error("Error: Kindly add username", req.query);
+        throw new APIError(401, "Kindly add username");
     }
 
-    const checkUserExist = await User.findById(userId)
+    const checkUserExist = await User.findOne({ username })
 
     if (!checkUserExist) {
         throw new APIError(400, "User does not exist")
@@ -84,13 +93,12 @@ const getAllVideosByUser = asyncHandler(async (req, res) => {
         throw new APIError(401, "Incorrect query");
     }
 
+    const userIdObject = new mongoose.Types.ObjectId(checkUserExist);
+
     const allVideosbyUser = await Video.aggregate([
         {
             $match: {
-                owner: mongoose.Types.ObjectId(userId),
-                title: {
-                    $regex: new RegExp(searchQuery, 'i')
-                }
+                owner: userIdObject
             }
         },
         {
@@ -112,15 +120,18 @@ const getAllVideosByUser = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
-        {
-            $addFields: {
-                owner: {
-                    $first: "$owner"
-                }
-            }
-        }
+        // TODO: fix issues with this 
+        // {
+        //     $addFields: {
+        //         owner: {
+        //             $arrayElemAt: ["$owner", 0]
+        //         }
+        //     }
+        // }
+    ]);
 
-    ])
+    console.log("Result of Aggregation:", allVideosbyUser);
+
 
     return res
         .status(200)
