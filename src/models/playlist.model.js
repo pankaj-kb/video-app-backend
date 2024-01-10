@@ -1,9 +1,10 @@
 import mongoose, { Schema } from "mongoose";
 
-const playListSchema = new Schema({
+const playlistSchema = new Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     description: {
         type: String,
@@ -19,8 +20,7 @@ const playListSchema = new Schema({
     owner: {
         type: Schema.Types.ObjectId,
         ref: "User"
-    },
-
+    }
 }, { timestamps: true })
 
-export const Playlist = mongoose.model("Playlist", playListSchema)
+export const Playlist = mongoose.model("Playlist", playlistSchema)

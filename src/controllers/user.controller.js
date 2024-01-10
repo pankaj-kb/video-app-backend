@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { APIError } from "../utils/APIError.js"
 import { User } from "../models/user.model.js"
+import { Subscription } from "../models/subscription.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import fs from "fs"
@@ -27,7 +28,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, username, password } = req.body;
-    // console.log(req.body)
 
     if (
         [fullName, email, username, password].some((field) => field.trim() === "")
@@ -36,10 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
-
-    // console.log(req.files)
-
-    // const coverImageLocalPath = req.files?.avatar[0]?.path;
 
     let coverImageLocalPath;
 
@@ -79,8 +75,6 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         username: username.toLowerCase()
     })
-
-    // console.log(user);
 
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
@@ -239,12 +233,15 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    // if (!req.user) {
-    //     throw new APIError(400, "No user found")
-    // }
+    if (!req.user) {
+        throw new APIError(400, "No user found")
+    }
+
+    const {_id, username, email} = req.user;
+
     return res
         .status(200)
-        .json(200, req.user, "Current user is fetched Successfully")
+        .json(new APIResponse(200, { _id, username, email }, "User Fetched Successfully."))
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -464,6 +461,120 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
 })
 
+const checkChannelExist = asyncHandler(async (req, res) => {
+
+    const { username } = req.params
+
+    if (!username) {
+        throw new APIError(400, "username not found")
+    }
+
+    const channelCheck = await User.findOne({ username })
+    console.log(channelCheck);
+
+    if (!channelCheck) {
+        throw new APIError(401, "Channel not found using username in DB")
+    }
+
+    const channel = channelCheck._id
+    console.log(channel);
+
+    return res
+        .status(200)
+        .json(201, channel, "Channel Fetched successfully")
+
+})
+
+const subscribeToChannel = asyncHandler(async (req, res) => {
+
+    const user = await User.findById(req.user?._id)
+
+    if (!user) {
+        throw new APIError(400, "kindly login to subscribe")
+    }
+
+    const { username } = req.params
+
+    if (!username) {
+        throw new APIError(401, "Channel not found.")
+    }
+
+    // check if channel/user exist in database
+
+    const channelExist = await User.findOne({ username })
+    console.log(channelExist)
+
+    if (!channelExist) {
+        throw new APIError(401, "Channel Does not exist.")
+    }
+
+    // extract User _id i.e channel ID from channel Exist.
+
+    const channel = channelExist._id;
+    console.log(channel)
+
+    // subscribe to channel
+
+    const subscriber = await Subscription.create({
+        subscriber: user,
+        channel: channel
+    })
+
+    if (!subscriber) {
+        throw new APIError(500,
+            "Something went wrong while subscribing to channel")
+    }
+
+    return res.status(201).json(new APIResponse(200, "User successfully subscribed to channel"))
+})
+
+const unSubscribeToChannel = asyncHandler(async (req, res) => {
+
+    const user = await User.findById(req.user?._id)
+
+    if (!user) {
+        throw new APIError(400, "kindly login first")
+    }
+
+    const { username } = req.params
+
+    if (!username) {
+        throw new APIError(401, "Channel not found.")
+    }
+
+    const channelExist = await User.findOne({ username })
+    console.log(channelExist)
+
+    if (!channelExist) {
+        throw new APIError(401, "Channel Does not exist.")
+    }
+
+    // extract User _id i.e channel ID from channel Exist.
+
+    const channel = channelExist._id;
+    console.log(channel)
+
+    const existingSubscriber = await Subscription.findOne({ subscriber: user, channel });
+
+    if (!existingSubscriber) {
+        throw new APIError(401, "Channel was not subscribed.")
+    }
+
+    // find by ID and delete the subscriber document.
+
+    const unSubscribe = await Subscription.findByIdAndDelete(existingSubscriber._id);
+    console.log(unSubscribe);
+
+    if (!unSubscribe) {
+        throw new APIError(404, "Subscriber document does not exist")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(201, unSubscribe, "successfully unsubscribed to channel"))
+
+})
+
 
 export {
     registerUser,
@@ -477,5 +588,7 @@ export {
     updateCoverImage,
     getUserChannelProfile,
     getWatchHistory,
-
+    checkChannelExist,
+    subscribeToChannel,
+    unSubscribeToChannel,
 }
