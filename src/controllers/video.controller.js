@@ -1,12 +1,13 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
-import { APIError } from "../utils/ApiError.js"
-import { APIResponse } from "../utils/ApiResponse.js"
+import { APIError } from "../utils/APIError.js"
+import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 //TODO: get all videos based on query, sort, pagination
+
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType } = req.query
 
@@ -46,7 +47,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $addFields: {
                 owner: {
-                    $first: "$owner"
+                    $arrayElemAt: ["$owner", 0]
                 }
             }
         }
