@@ -246,8 +246,8 @@ const updateVideo = asyncHandler(async (req, res) => {
     )
 
     return res
-    .status(201)
-    .json(new APIResponse(201, video, "Video Fetched Successfully."))
+        .status(201)
+        .json(new APIResponse(201, video, "Video Fetched Successfully."))
 
 })
 
@@ -257,19 +257,46 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const video = await Video.findById(videoId)
 
     if (!video) {
-        throw new APIError(404,"Video not found/exist.")
+        throw new APIError(404, "Video not found/exist.")
     }
     console.log(video)
     const deleteVideo = await Video.findByIdAndDelete(video)
     console.log(deleteVideo)
 
     return res
-    .status(201)
-    .json(new APIResponse(201, deleteVideo, "Video Deleted Successfully."))
+        .status(201)
+        .json(new APIResponse(201, deleteVideo, "Video Deleted Successfully."))
 })
 
+// Change publish status of Video.
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new APIError(404, "Video not found/exist.")
+    }
+
+    const updateVideo = await Video.findByIdAndUpdate(videoId, {
+        
+        $set: {
+            isPublished: !video.isPublished
+        }
+    },
+        {
+            new: true
+        })
+
+    if (!updateVideo) {
+        throw new APIError(404, "Something went wrong while chaning status")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, updateVideo, "Stauts changed Successfully."))
+
+    // Test this.
 })
 
 export {
