@@ -30,7 +30,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
                         $regex: new RegExp(searchQuery, 'i')
                     }
                 }
-            ]
+                ]
             }
         },
         {
@@ -187,7 +187,25 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
+
+    console.log(req.params)
+    console.log(videoId);
+
+    // if (videoId) {
+    //     throw new APIError(401, "Kindly provide videoID.")
+    // }
+
+    const video = await Video.findById(videoId)
+    // console.log(video)
+
+    if (!video) {
+        throw new APIError(404, "Video not found/exist.")
+    }
+
+    return res
+    .status(201)
+    .json(new APIResponse(201, video, "Video Fetched Successfully."))
+
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
