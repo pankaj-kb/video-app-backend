@@ -272,24 +272,31 @@ const deleteVideo = asyncHandler(async (req, res) => {
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
-    const video = await Video.findByIdAndUpdate(videoId, {
+    const video = await Video.findById(videoId)
+
+    if (!video) {
+        throw new APIError(404, "Video not found/exist.")
+    }
+
+    const updateVideo = await Video.findByIdAndUpdate(videoId, {
+        
         $set: {
-            isPublished: { $not: "$isPublished" }
+            isPublished: !video.isPublished
         }
     },
         {
             new: true
         })
 
-    if (!video) {
+    if (!updateVideo) {
         throw new APIError(404, "Something went wrong while chaning status")
     }
 
     return res
         .status(200)
-        .json(new APIResponse(200, video, "Stauts changed Successfully."))
+        .json(new APIResponse(200, updateVideo, "Stauts changed Successfully."))
 
-
+    // Test this.
 })
 
 export {
