@@ -188,8 +188,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
-    console.log(req.params)
-    console.log(videoId);
+    // console.log(req.params)
+    // console.log(videoId);
 
     // if (videoId) {
     //     throw new APIError(401, "Kindly provide videoID.")
@@ -203,14 +203,51 @@ const getVideoById = asyncHandler(async (req, res) => {
     }
 
     return res
-    .status(201)
-    .json(new APIResponse(201, video, "Video Fetched Successfully."))
+        .status(201)
+        .json(new APIResponse(201, video, "Video Fetched Successfully."))
 
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
+
+    const foundVideo = await Video.findById(videoId)
+    // console.log(video)
+
+    if (!foundVideo) {
+        throw new APIError(404, "Video not found/exist.")
+    }
+
+    const videoFilePath = req.files?.videoFile[0]?.path;
+    const thumbnailFilePath = req.files?.thumbnailFile[0]?.path;
+
+    // create alternate method to upload thumbnail or fetch it from cloudinary
+
+    const videoFile = await uploadOnCloudinary(videoFilePath)
+
+    const thumbnailFile = await uploadOnCloudinary(thumbnailFilePath)
+
+    if (!videoFile) {
+        throw new APIError(400, "Video is not uploaded.")
+    }
+
+    if (!thumbnailFile) {
+        throw new APIError(400, "Thumbnail is not uploaded.")
+    }
+
+    const video = await Video.findByIdAndUpdate(foundVideo, {
+        $set: {
+            videoFile: videoFile,
+            thumbnailFile: thumbnailFile,
+        }
+    },
+        { new: true }
+    )
+
+    return res
+    .status(201)
+    .json(new APIResponse(201, video, "Video Fetched Successfully."))
 
 })
 
