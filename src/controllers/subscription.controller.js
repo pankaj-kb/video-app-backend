@@ -59,30 +59,50 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
         throw new APIError(400, 'Invalid channelId');
     }
 
-    const channel = User.findById(channelId)
+    const channel = await User.findOne({_id: channelId})
 
     if (!channel) {
         throw new APIError(404, "Channel/User does not exist.")
     }
 
-    // const subscribers = await Subscription.aggregate([
-    //     {
-    //         $match: {
-    //             channel: channel._id
-    //         }
-    //     }
+    const subscribers = await Subscription.aggregate([
+        {
+            $match: {
+                channel: channel._id
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'subscriber',
+                foreignField: '_id',
+                as: 'subscriberInfo'
+            }
+        },
+        {
+            $project: {
+                _id: 1, 
+                subscriberInfo: {
+                    _id: 1,
+                    username: 1,
+                    email: 1,
+                    fullName: 1,
+                    avatar: 1,
+                }
+            }
+        }
 
-    // ])
+    ])
 
     // Manual Approach
 
-    const subscribers = await Subscription.find({
-        channel: channelId
-    })
+    // const subscribers = await Subscription.find({
+    //     channel: channelId
+    // })
 
 
     if (subscribers.length === 0) {
-        return res.status(200).json(new APIResponse(200, subscribers, "No subscribers found."))
+        return res.status(200).json(new APIResponse(200, null, "No subscribers found."))
     }
 
     return res
