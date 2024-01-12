@@ -59,7 +59,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
         throw new APIError(400, 'Invalid channelId');
     }
 
-    const channel = await User.findOne({_id: channelId})
+    const channel = await User.findOne({ _id: channelId })
 
     if (!channel) {
         throw new APIError(404, "Channel/User does not exist.")
@@ -81,7 +81,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                _id: 1, 
+                _id: 1,
                 subscriberInfo: {
                     _id: 1,
                     username: 1,
@@ -112,7 +112,46 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { subscriberId } = req.params
+    // using approach to rename the var before use as it is changed in router.
+    const { channelId: subscriberId } = req.params
+
+    const user = await User.findOne({ _id: subscriberId })
+
+    if (!user) {
+        throw new APIError(404, "User/Subscriber does not exist.")
+    }
+
+    const subscribedToList = await Subscription.aggregate([
+        {
+            $match: {
+                subscriber: user._id
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField: "_id",
+                as: "subscriptionList"
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                subscriptionList: {
+                    _id: 1,
+                    username: 1,
+                    email: 1,
+                    fullName: 1,
+                    avatar: 1,
+                }
+            }
+        }
+    ])
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, subscribedToList, "Channel List fetched."))
 })
 
 export {
