@@ -20,10 +20,11 @@ app.use(cookieParser())
 
 import userRouter from "./routes/user.routes.js"
 import videoRouter from "./routes/video.routes.js"
+import subscriptionRouter from "./routes/subscription.routes.js"
 
 // routes
 
-// User Routes
+// User Route
 
 app.get("/", (req, res) => {
     res.send("<h1>Server running</h1>");
@@ -31,8 +32,12 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/users", userRouter)
 
-// Video Routes
+// Video Route
 
 app.use("/api/v1/video", videoRouter)
+
+// Subscription Route
+
+app.use("/api/v1/subscription", subscriptionRouter)
 
 export { app }
