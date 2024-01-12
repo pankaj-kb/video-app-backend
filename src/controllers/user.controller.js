@@ -335,9 +335,9 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 
     const { username } = req.params
 
-    if (!username?.trim) {
-        throw new APIError(400, "Username is missing")
-    }
+    // if (!username?.trim) {
+    //     throw new APIError(400, "Username is missing")
+    // }
     // aggregation pipeline
 
     const channel = await User.aggregate([
