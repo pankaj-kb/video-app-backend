@@ -9,7 +9,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 //TODO: get all videos based on query, sort, pagination
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType } = req.query
+    const { page, limit, query, sortBy, sortType } = req.query
 
     const searchQuery = query;
 
@@ -17,7 +17,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         throw new APIError(401, "Incorrect query");
     }
 
-    const allVideos = await Video.aggregate([
+    const allVideosAggregation = [
         {
             $match: {
                 $or: [{
@@ -60,9 +60,23 @@ const getAllVideos = asyncHandler(async (req, res) => {
         //     }
         // }
 
-    ])
+    ]
 
-    if (allVideos.length === 0) {
+    const paginatedVideos = await Video.aggregatePaginate(allVideosAggregation, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'videos',
+            totalDocs: 'totalVideos'
+        }
+    })
+
+    if (!paginatedVideos) {
+        throw new APIError(400, "Something went wrong while loading videos.")
+    }
+
+    if (paginatedVideos.totalVideos === 0) {
         return res
             .status(400)
             .json(new APIResponse(400, "No Videos Found."))
@@ -70,13 +84,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new APIResponse(200, allVideos, "all Videos fetched"));
+        .json(new APIResponse(200, paginatedVideos, "all Videos fetched"));
 })
 
 // get all videos by the user without the query like the userpage
 
+// TOdo: Automate pagination here as well.
+
 const getAllVideosByUser = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, sortBy, sortType, username } = req.query
+    const { page, limit, sortBy, sortType, username } = req.query
 
     if (!username || username.trim() === "") {
         console.error("Error: Kindly add username", req.query);
@@ -95,7 +111,7 @@ const getAllVideosByUser = asyncHandler(async (req, res) => {
 
     const userIdObject = new mongoose.Types.ObjectId(checkUserExist);
 
-    const allVideosbyUser = await Video.aggregate([
+    const allVideosbyUser = [
         {
             $match: {
                 owner: userIdObject
@@ -128,14 +144,31 @@ const getAllVideosByUser = asyncHandler(async (req, res) => {
         //         }
         //     }
         // }
-    ]);
+    ]
 
-    console.log("Result of Aggregation:", allVideosbyUser);
+    const paginatedVideos = await Video.aggregatePaginate(allVideosbyUser, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'videos',
+            totalDocs: 'totalVideos'
+        }
+    })
 
+    if (!paginatedVideos) {
+        throw new APIError(400, "Something went wrong while loading videos.")
+    }
+
+    if (paginatedVideos.totalVideos === 0) {
+        return res
+            .status(201)
+            .json(new APIResponse(201, "No videos from User"))
+    }
 
     return res
         .status(200)
-        .json(new APIResponse(200, allVideosbyUser, "all Videos fetched"));
+        .json(new APIResponse(200, paginatedVideos, "all Videos fetched"));
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -279,7 +312,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     }
 
     const updateVideo = await Video.findByIdAndUpdate(videoId, {
-        
+
         $set: {
             isPublished: !video.isPublished
         }
