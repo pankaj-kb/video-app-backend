@@ -149,6 +149,12 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         }
     ])
 
+    // Adding manual approach for practice.
+
+    // const subscribedToList = await Subscription.find({
+    //     subscriber: user._id
+    // })
+
     return res
         .status(200)
         .json(new APIResponse(200, subscribedToList, "Channel List fetched."))
