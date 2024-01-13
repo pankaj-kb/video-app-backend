@@ -22,9 +22,18 @@ const createTweet = asyncHandler(async (req, res) => {
         throw new APIError(401, "Tweet can't be empty")
     }
 
+    const tweet = await Tweet.create({
+        owner: user._id,
+        content: tweetContent
+    })
+
+    if (!tweet) {
+        throw new APIError(401, "Something went wrong while uploading tweet.")
+    }
+
     return res
     .status(200)
-    .json(new APIResponse(201, tweetContent, "Tweet is uploaded/added."))
+    .json(new APIResponse(201, tweet, "Tweet is uploaded/added."))
     
 })
 
