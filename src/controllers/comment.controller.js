@@ -35,8 +35,21 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 foreignField: "_id",
                 as: "commentsBy"
             }
-        }
+        },
+
         // Add projection to show comment owner
+        {
+            $project: {
+                _id: 1,
+                commentBy: {
+                    _id: 1,
+                    username: 1,
+                    email: 1,
+                    fullName: 1,
+                    avatar: 1,
+                }
+            }
+        }
     ]
 
     const paginatedComments = await Comment.aggregatePaginate(commentList, {
