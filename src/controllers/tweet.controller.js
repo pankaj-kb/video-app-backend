@@ -52,8 +52,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
             $match: {
                 owner: user._id
             }
-        }
-
+        },
     ])
 
     if (!tweets) {
@@ -74,10 +73,52 @@ const getUserTweets = asyncHandler(async (req, res) => {
 
 const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
+
+    const { tweetId } = req.params;
+
+    const prevTweet = await Tweet.findOne({ _id: tweetId })
+
+    if (!prevTweet) {
+        throw new APIError(404, "Tweet does not exist")
+    }
+
+    const { tweetContent } = req.body
+    if (tweetContent.trim() === '') {
+        throw new APIError(401, "Tweet can't be empty")
+    }
+
+    const tweet = await Tweet.findByIdAndUpdate(prevTweet, {
+        $set: {
+            content: tweetContent
+        }
+    }, { new: true })
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, tweet, "Tweet updated successfully."))
+
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
+
+    const { tweetId } = req.params;
+
+    const tweet = await Tweet.findOne({ _id: tweetId })
+
+    if (!tweet) {
+        throw new APIError(201, "Tweet Does not exist.")
+    }
+
+    const deleteTweet = await Tweet.deleteOne({ _id: tweet._id })
+
+    if (!deleteTweet) {
+        throw new APIError(401, "Something went wrong while deleting tweet.")
+    }
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, deleteTweet, "tweet has been deleted."))
 })
 
 export {
