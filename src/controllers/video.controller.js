@@ -204,7 +204,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
         videoFile: videoFile.url,
         time: videoFile.duration,
         thumbnail: thumbnailFile.url,
-        owner: req.user,
+        owner: req.user._id,
         isPublished: true
     })
 
