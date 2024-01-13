@@ -52,6 +52,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
+
+        //  Add project to display owner info
         // {
         //     $addFields: {
         //         owner: {
