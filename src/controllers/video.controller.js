@@ -52,13 +52,20 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
-        // {
-        //     $addFields: {
-        //         owner: {
-        //             $arrayElemAt: ["$owner", 0]
-        //         }
-        //     }
-        // }
+
+        //  Add project to display owner info
+        {
+            $project: {
+                _id: 1,
+                ownerInfo: {
+                    _id: 1,
+                    username: 1,
+                    email: 1,
+                    fullName: 1,
+                    avatar: 1,
+                }
+            }
+        }
 
     ]
 
