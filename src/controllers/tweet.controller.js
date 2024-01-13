@@ -16,7 +16,7 @@ const createTweet = asyncHandler(async (req, res) => {
         throw new APIError(404, "User not found")
     }
 
-    const {tweetContent} = req.body;
+    const { tweetContent } = req.body;
 
     if (tweetContent.trim() === '') {
         throw new APIError(401, "Tweet can't be empty")
@@ -32,13 +32,44 @@ const createTweet = asyncHandler(async (req, res) => {
     }
 
     return res
-    .status(200)
-    .json(new APIResponse(201, tweet, "Tweet is uploaded/added."))
-    
+        .status(200)
+        .json(new APIResponse(201, tweet, "Tweet is uploaded/added."))
+
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
+    const { userId } = req.params
+
+    const user = await User.findOne({ _id: userId })
+
+    if (!user) {
+        throw new APIError("User does not exist.")
+    }
+
+    const tweets = await Tweet.aggregate([
+        {
+            $match: {
+                owner: user._id
+            }
+        }
+
+    ])
+
+    if (!tweets) {
+        return new APIError(404, "Something went wrong while fetching tweets.")
+    }
+
+    if (tweets.length === 0) {
+        return res
+            .status(201)
+            .json(new APIResponse(201, null, "No Tweets found"))
+    }
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, tweets, "All tweets fetched successfully."))
+
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
