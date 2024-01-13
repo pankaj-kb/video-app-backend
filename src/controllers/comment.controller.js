@@ -154,6 +154,25 @@ const updateComment = asyncHandler(async (req, res) => {
 
 const deleteComment = asyncHandler(async (req, res) => {
     // TODO: delete a comment
+
+    const { commentId } = req.params;
+
+    const comment = await Comment.findOne({ _id: commentId })
+
+    if (!comment) {
+        throw new APIError(404, "Comment does not exist.")
+    }
+
+    const deleteComment = await Comment.findByIdAndDelete(comment)
+
+    if (!deleteComment) {
+        throw new APIError(401, "Something went wrong while deleting comment.")
+    }
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, deleteComment, "Comment deleted successfully."))
+
 })
 
 export {
