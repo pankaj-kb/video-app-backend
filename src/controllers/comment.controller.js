@@ -33,23 +33,30 @@ const getVideoComments = asyncHandler(async (req, res) => {
                 from: "users",
                 localField: "owner",
                 foreignField: "_id",
-                as: "commentsBy"
+                as: "commentsBy",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            commentBy: {
+                                _id: 1,
+                                username: 1,
+                                email: 1,
+                                fullName: 1,
+                                avatar: 1,
+                            }
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
             }
         },
-
-        // Add projection to show comment owner
-        {
-            $project: {
-                _id: 1,
-                commentBy: {
-                    _id: 1,
-                    username: 1,
-                    email: 1,
-                    fullName: 1,
-                    avatar: 1,
-                }
-            }
-        }
     ]
 
     const paginatedComments = await Comment.aggregatePaginate(commentList, {
@@ -119,6 +126,30 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
     // TODO: update a comment
+    const { commentId } = req.params;
+    const { comment } = req.body;
+
+    const prevCommment = await Comment.findOne({ _id: commentId })
+
+    console.log(prevCommment);
+
+    if (!prevCommment) {
+        throw new APIError(401, "Comment not found/exist.")
+    }
+
+    if (comment.trim() === '') {
+        throw new APIError(401, "Comment can't be empty.")
+    }
+
+    const updateComment = await Comment.findByIdAndUpdate(prevCommment, {
+        $set: {
+            comment: comment
+        }
+    }, { new: true })
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, updateComment, "Comment Updated Successfully."))
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
