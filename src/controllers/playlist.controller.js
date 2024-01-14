@@ -4,6 +4,7 @@ import { APIError } from "../utils/APIError.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { User } from "../models/user.model.js"
+import { Video } from "../models/video.model.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
@@ -77,8 +78,10 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
     const playlist = await Playlist.findOne({ _id: playlistId })
 
+    // console.log(playlist);
+
     if (!playlist) {
-        throw new APIError(200, "Playlist does not exist.")
+        throw new APIError(404, "Playlist does not exist.")
     }
 
     return res
@@ -88,12 +91,93 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 })
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
+
     const { playlistId, videoId } = req.params
+
+    if ([playlistId, videoId].some((field) => field.trim() === '' || !isValidObjectId(field))) {
+        throw new APIError(401, "not a valid playlistId or videoId")
+    }
+
+    const playlist = await Playlist.findOne({ _id: playlistId })
+    // console.log(playlist)
+    const video = await Video.findOne({ _id: videoId })
+    // console.log(video)
+
+    if (!playlist) {
+        throw new APIError(404, "Playlist does not exist.")
+    }
+
+    if (!video) {
+        throw new APIError(404, "Video does not exist.")
+    }
+
+    const checkExist = await Playlist.findOne({
+        _id: playlist._id,
+        videos: video._id
+    });
+
+    if (checkExist) {
+        throw new APIError(401, "Video already exists inside playlist.");
+    }
+
+    const updatePlaylist = await Playlist.findByIdAndUpdate(
+        { _id: playlist._id },
+        { $push: { videos: video } },
+        { new: true }
+    )
+    if (!updatePlaylist) {
+        throw new APIError(401, "Something went wrong while adding video to playlist.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, updatePlaylist, "Video added to playlist."))
+
 })
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
+    
     const { playlistId, videoId } = req.params
-    // TODO: remove video from playlist
+
+    if ([playlistId, videoId].some((field) => field.trim() === '' || !isValidObjectId(field))) {
+        throw new APIError(401, "not a valid playlistId or videoId")
+    }
+
+    const playlist = await Playlist.findOne({ _id: playlistId })
+    // console.log(playlist);
+    const video = await Video.findOne({ _id: videoId })
+    // console.log(video);
+
+    if (!playlist) {
+        throw new APIError(404, "Playlist does not exist.")
+    }
+
+    if (!video) {
+        throw new APIError(404, "Video does not exist.")
+    }
+
+    const checkExist = await Playlist.findOne({
+        _id: playlist._id,
+        videos: video._id
+    })
+
+    if (!checkExist) {
+        throw new APIError(404, "Video does not exist inside Playlist.")
+    }
+
+    const updatePlaylist = await Playlist.findByIdAndUpdate(
+        { _id: playlist._id },
+        { $pull: { videos: video._id } },
+        { new: true }
+    )
+
+    if (!updatePlaylist) {
+        throw new APIError(401, "There was some issue while removing video from playlist.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, updatePlaylist, "Playlist has beeen updated."))
 
 })
 
