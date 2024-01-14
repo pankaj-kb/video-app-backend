@@ -5,6 +5,8 @@ import { APIError } from "../utils/APIError.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { CheckExist } from "../utils/CheckExist.js"
+import { Comment } from "../models/comment.model.js"
+import { Tweet } from "../models/tweet.model.js"
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
 
@@ -21,11 +23,11 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         throw new APIError(404, "Video Does not exist.")
     }
 
-    const likeExist = await Like.find({ video: video._id, likedBy: req.user })
+    const likeExist = await Like.find({ video: video._id, likedBy: userId })
 
     if (likeExist.length === 0) {
         const like = await Like.create({
-            video: video,
+            video: video._id,
             likedBy: userId
         })
         if (!like) {
@@ -53,13 +55,79 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params
-    //TODO: toggle like on comment
+    const userId = req.user._id
+    const comment = await Comment.findById({ _id: commentId })
+
+    if (!comment) {
+        throw new APIError(404, "Comment does not exist.")
+    }
+
+    const likeExist = await Like.find({ comment: commentId, likedBy: userId })
+
+    if (likeExist.length === 0) {
+        const like = await Like.create({
+            comment: comment._id,
+            likedBy: userId
+        })
+
+        if (!like) {
+            throw new APIError(401, "Something went wrong while liking the comment.")
+        }
+
+        return res
+            .status(201)
+            .json(new APIResponse(201, like, "Liked the Comment Successfully."))
+    }
+
+    const unlike = await Like.findByIdAndDelete(likeExist)
+
+    if (!unlike) {
+        throw new APIError(401, "Something went wrong while removing like.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, unlike, "removed like successfully."))
 
 })
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
+
     const { tweetId } = req.params
-    //TODO: toggle like on tweet
+    const userId = req.user._id
+    
+    const tweet = await Tweet.findById({ _id: tweetId })
+
+    if (!tweet) {
+        throw new APIError(404, "Tweet does not exist.")
+    }
+
+    const likeExist = await Like.find({ tweet: tweet._id, likedBy: userId })
+
+    if (likeExist.length === 0) {
+        const like = await Like.create({
+            tweet: tweet._id,
+            likedBy: userId
+        })
+
+        if (!like) {
+            throw new APIError(401, "Something went wrong while liking the tweet.")
+        }
+
+        return res
+            .status(201)
+            .json(new APIResponse(201, like, "Liked the Tweet Successfully."))
+    }
+
+    const unlike = await Like.findByIdAndDelete(likeExist)
+
+    if (!unlike) {
+        throw new APIError(401, "Something went wrong while removing like.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, unlike, "removed like successfully."))
 }
 )
 
