@@ -95,7 +95,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
     const { tweetId } = req.params
     const userId = req.user._id
-    
+
     const tweet = await Tweet.findById({ _id: tweetId })
 
     if (!tweet) {
@@ -132,7 +132,33 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    //TODO: get all liked videos
+
+    const user = req.user
+
+    // const likedVideos = await Like.aggregate(
+    //     [
+    //         {
+    //             $match: {
+    //                 likedBy: new mongoose.Types.ObjectId(user._id)
+    //             }
+    //         }
+    //     ]
+    // )
+
+    // Classic Approach
+    
+    const likedVideos = await Like.find({ likedBy: user._id })
+
+    if (likedVideos.length === 0) {
+        return res
+            .status(200)
+            .json(new APIResponse(200, null, "No Videos Found."))
+    }
+
+    return res
+        .status(201)
+        .json(new APIResponse(201, likedVideos, "Successfully fetched all the liked Videos."))
+
 })
 
 export {
