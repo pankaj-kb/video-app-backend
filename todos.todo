@@ -1,1 +1,3 @@
-1. Create Utility to check existence of documents using "_id"
+1. Create Utility to check existence of documents using "_id" //done
+2. fix issues with check existance utility.
+3. fix aggregation pipelines.
