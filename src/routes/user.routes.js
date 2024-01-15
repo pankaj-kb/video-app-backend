@@ -8,12 +8,12 @@ import {
     logoutUser,
     refreshAccessToken,
     registerUser,
-    subscribeToChannel,
-    unSubscribeToChannel,
     updateAccountDetails,
     updateCoverImage,
     updateUserAvatar,
     // checkChannelExist,
+    // subscribeToChannel,
+    // unSubscribeToChannel,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -58,8 +58,8 @@ router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 
 router.route("/watch-history").get(verifyJWT, getWatchHistory)
 
-router.route("/subscribe").get(verifyJWT, subscribeToChannel)
+// router.route("/subscribe").get(verifyJWT, subscribeToChannel)
 
-router.route("/unsubscribe").get(verifyJWT, unSubscribeToChannel)
+// router.route("/unsubscribe").get(verifyJWT, unSubscribeToChannel)
 
 export default router

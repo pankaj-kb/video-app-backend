@@ -589,6 +589,6 @@ export {
     getUserChannelProfile,
     getWatchHistory,
     checkChannelExist,
-    subscribeToChannel,
-    unSubscribeToChannel,
+    // subscribeToChannel,
+    // unSubscribeToChannel,
 }

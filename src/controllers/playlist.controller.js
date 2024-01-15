@@ -96,6 +96,12 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     // add validation that playlist is owned by logged in user.
 
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login First.")
+    }
+
     if ([playlistId, videoId].some((field) => field.trim() === '' || !isValidObjectId(field))) {
         throw new APIError(401, "not a valid playlistId or videoId")
     }
@@ -111,6 +117,12 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     if (!video) {
         throw new APIError(404, "Video does not exist.")
+    }
+
+    const isOwner = playlist.owner.equals(user._id);
+
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
     }
 
     const checkExist = await Playlist.findOne({
@@ -138,8 +150,14 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 })
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
-    
+
     const { playlistId, videoId } = req.params
+
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "kindly login first.")
+    }
 
     if ([playlistId, videoId].some((field) => field.trim() === '' || !isValidObjectId(field))) {
         throw new APIError(401, "not a valid playlistId or videoId")
@@ -156,6 +174,12 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
     if (!video) {
         throw new APIError(404, "Video does not exist.")
+    }
+
+    const isOwner = playlist.owner.equals(user._id);
+
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
     }
 
     const checkExist = await Playlist.findOne({
@@ -184,8 +208,14 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 })
 
 const deletePlaylist = asyncHandler(async (req, res) => {
+
     const { playlistId } = req.params
-    // TODO: delete playlist
+
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "kindly login first.")
+    }
 })
 
 const updatePlaylist = asyncHandler(async (req, res) => {
