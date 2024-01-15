@@ -25,6 +25,8 @@ import tweetRouter from "./routes/tweet.routes.js"
 import commentRouter from "./routes/comment.routes.js"
 import likeRouter from "./routes/like.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
+import healhcheckRouter from "./routes/healthcheck.routes.js"
+import dashboardRouter from "./routes/dashboard.routes.js"
 
 // routes
 
@@ -32,6 +34,10 @@ import playlistRouter from "./routes/playlist.routes.js"
 app.get("/", (req, res) => {
     res.send("<h1>Server running</h1>");
 })
+
+// Health-Check Router
+
+app.use("/api/v1/healthcheck", healhcheckRouter)
 
 // User Route
 
@@ -60,5 +66,9 @@ app.use("/api/v1/like", likeRouter)
 // Playlist Route
 
 app.use("/api/v1/playlist", playlistRouter)
+
+// Dashboard Route
+
+app.use("/api/v1/dashboard", dashboardRouter)
 
 export { app }

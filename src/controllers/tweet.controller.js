@@ -72,7 +72,12 @@ const getUserTweets = asyncHandler(async (req, res) => {
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
-    //TODO: update tweet
+    
+    const user = await User.findOne({_id: req.user._id})
+
+    if (!user) {
+        throw new APIError(401, "Kindly login first.")
+    }
 
     const { tweetId } = req.params;
 
@@ -80,6 +85,12 @@ const updateTweet = asyncHandler(async (req, res) => {
 
     if (!prevTweet) {
         throw new APIError(404, "Tweet does not exist")
+    }
+
+    const isOwner = prevTweet.owner.equals(user._id)
+
+    if(!isOwner) {
+        throw new APIError(401, "not authorized.")
     }
 
     const { tweetContent } = req.body
@@ -100,7 +111,12 @@ const updateTweet = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    //TODO: delete tweet
+    
+    const user = await User.findOne({_id: req.user._id})
+
+    if (!user) {
+        throw new APIError(401, "Kindly login first.")
+    }
 
     const { tweetId } = req.params;
 
@@ -110,7 +126,13 @@ const deleteTweet = asyncHandler(async (req, res) => {
         throw new APIError(201, "Tweet Does not exist.")
     }
 
-    const deleteTweet = await Tweet.deleteOne({ _id: tweet._id })
+    const isOwner = tweet.owner.equals(user._id)
+
+    if(!isOwner) {
+        throw new APIError(401, "not authorized.")
+    }
+
+    const deleteTweet = await Tweet.findByIdAndDelete(tweet._id)
 
     if (!deleteTweet) {
         throw new APIError(401, "Something went wrong while deleting tweet.")
