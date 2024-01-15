@@ -25,6 +25,7 @@ import tweetRouter from "./routes/tweet.routes.js"
 import commentRouter from "./routes/comment.routes.js"
 import likeRouter from "./routes/like.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
+import healhcheckRouter from "./routes/healthcheck.routes.js"
 
 // routes
 
@@ -32,6 +33,10 @@ import playlistRouter from "./routes/playlist.routes.js"
 app.get("/", (req, res) => {
     res.send("<h1>Server running</h1>");
 })
+
+// Health-Check Router
+
+app.use("/api/v1/healthcheck", healhcheckRouter)
 
 // User Route
 
