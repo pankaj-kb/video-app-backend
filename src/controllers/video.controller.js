@@ -250,14 +250,24 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    
+
     // add validation that video. is owned by logged in user.
 
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login first.")
+    }
+
     const foundVideo = await Video.findById(videoId)
-    // console.log(video)
 
     if (!foundVideo) {
         throw new APIError(404, "Video not found/exist.")
+    }
+
+    const isOwner = foundVideo.owner.equals(user._id)
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
     }
 
     const videoFilePath = req.files?.videoFile[0]?.path;
@@ -294,17 +304,30 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    
+
     // add validation that comment. is owned by logged in user.
-    
+
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login first.")
+    }
+
     const video = await Video.findById(videoId)
 
     if (!video) {
         throw new APIError(404, "Video not found/exist.")
     }
-    console.log(video)
+
+    const isOwner = video.owner.equals(user._id)
+
+    if(!isOwner) {
+        throw new APIError(401, "not authorized.")
+    }
+
+    // console.log(video)
     const deleteVideo = await Video.findByIdAndDelete(video)
-    console.log(deleteVideo)
+    // console.log(deleteVideo)
 
     return res
         .status(201)
@@ -316,10 +339,22 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     // add validation that comment. is owned by logged in user.
     const { videoId } = req.params
 
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login first.")
+    }
+
     const video = await Video.findById(videoId)
 
     if (!video) {
         throw new APIError(404, "Video not found/exist.")
+    }
+
+    const isOwner = video.owner.equals(user._id)
+
+    if(!isOwner) {
+        throw new APIError(401, "not authorized.")
     }
 
     const updateVideo = await Video.findByIdAndUpdate(videoId, {

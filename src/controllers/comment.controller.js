@@ -87,7 +87,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 const addComment = asyncHandler(async (req, res) => {
-    
+
     // add validation that comment. is owned by logged in user.
 
     const { videoId } = req.params
@@ -130,9 +130,19 @@ const updateComment = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
     const { comment } = req.body;
 
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login First.")
+    }
+
     const prevCommment = await Comment.findOne({ _id: commentId })
 
-    console.log(prevCommment);
+    const isOwner = prevCommment.owner.equals(user._id);
+
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
+    }
 
     if (!prevCommment) {
         throw new APIError(401, "Comment not found/exist.")
@@ -158,7 +168,19 @@ const deleteComment = asyncHandler(async (req, res) => {
 
     const { commentId } = req.params;
 
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "Kindly login First.")
+    }
+
     const comment = await Comment.findOne({ _id: commentId })
+    
+    const isOwner = comment.owner.equals(user._id);
+
+    if(!isOwner) {
+        throw new APIError(401, "Not authorized.")
+    }
 
     if (!comment) {
         throw new APIError(404, "Comment does not exist.")
