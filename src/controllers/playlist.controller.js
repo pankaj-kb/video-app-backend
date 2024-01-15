@@ -94,6 +94,8 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
     const { playlistId, videoId } = req.params
 
+    // add validation that playlist is owned by logged in user.
+
     if ([playlistId, videoId].some((field) => field.trim() === '' || !isValidObjectId(field))) {
         throw new APIError(401, "not a valid playlistId or videoId")
     }

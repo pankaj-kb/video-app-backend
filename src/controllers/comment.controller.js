@@ -87,7 +87,8 @@ const getVideoComments = asyncHandler(async (req, res) => {
 })
 
 const addComment = asyncHandler(async (req, res) => {
-    // TODO: add a comment to a video
+    
+    // add validation that comment. is owned by logged in user.
 
     const { videoId } = req.params
 

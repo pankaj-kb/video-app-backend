@@ -250,7 +250,8 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: update video details like title, description, thumbnail
+    
+    // add validation that video. is owned by logged in user.
 
     const foundVideo = await Video.findById(videoId)
     // console.log(video)
@@ -293,7 +294,9 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+    
+    // add validation that comment. is owned by logged in user.
+    
     const video = await Video.findById(videoId)
 
     if (!video) {
@@ -310,6 +313,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 // Change publish status of Video.
 const togglePublishStatus = asyncHandler(async (req, res) => {
+    // add validation that comment. is owned by logged in user.
     const { videoId } = req.params
 
     const video = await Video.findById(videoId)

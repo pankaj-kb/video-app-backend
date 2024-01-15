@@ -485,95 +485,95 @@ const checkChannelExist = asyncHandler(async (req, res) => {
 
 })
 
-const subscribeToChannel = asyncHandler(async (req, res) => {
+// const subscribeToChannel = asyncHandler(async (req, res) => {
 
-    const user = await User.findById(req.user?._id)
+//     const user = await User.findById(req.user?._id)
 
-    if (!user) {
-        throw new APIError(400, "kindly login to subscribe")
-    }
+//     if (!user) {
+//         throw new APIError(400, "kindly login to subscribe")
+//     }
 
-    const { username } = req.params
+//     const { username } = req.params
 
-    if (!username) {
-        throw new APIError(401, "Channel not found.")
-    }
+//     if (!username) {
+//         throw new APIError(401, "Channel not found.")
+//     }
 
-    // check if channel/user exist in database
+//     // check if channel/user exist in database
 
-    const channelExist = await User.findOne({ username })
-    console.log(channelExist)
+//     const channelExist = await User.findOne({ username })
+//     console.log(channelExist)
 
-    if (!channelExist) {
-        throw new APIError(401, "Channel Does not exist.")
-    }
+//     if (!channelExist) {
+//         throw new APIError(401, "Channel Does not exist.")
+//     }
 
-    // extract User _id i.e channel ID from channel Exist.
+//     // extract User _id i.e channel ID from channel Exist.
 
-    const channel = channelExist._id;
-    console.log(channel)
+//     const channel = channelExist._id;
+//     console.log(channel)
 
-    // subscribe to channel
+//     // subscribe to channel
 
-    const subscriber = await Subscription.create({
-        subscriber: user,
-        channel: channel
-    })
+//     const subscriber = await Subscription.create({
+//         subscriber: user,
+//         channel: channel
+//     })
 
-    if (!subscriber) {
-        throw new APIError(500,
-            "Something went wrong while subscribing to channel")
-    }
+//     if (!subscriber) {
+//         throw new APIError(500,
+//             "Something went wrong while subscribing to channel")
+//     }
 
-    return res.status(201).json(new APIResponse(200, "User successfully subscribed to channel"))
-})
+//     return res.status(201).json(new APIResponse(200, "User successfully subscribed to channel"))
+// })
 
-const unSubscribeToChannel = asyncHandler(async (req, res) => {
+// const unSubscribeToChannel = asyncHandler(async (req, res) => {
 
-    const user = await User.findById(req.user?._id)
+//     const user = await User.findById(req.user?._id)
 
-    if (!user) {
-        throw new APIError(400, "kindly login first")
-    }
+//     if (!user) {
+//         throw new APIError(400, "kindly login first")
+//     }
 
-    const { username } = req.params
+//     const { username } = req.params
 
-    if (!username) {
-        throw new APIError(401, "Channel not found.")
-    }
+//     if (!username) {
+//         throw new APIError(401, "Channel not found.")
+//     }
 
-    const channelExist = await User.findOne({ username })
-    console.log(channelExist)
+//     const channelExist = await User.findOne({ username })
+//     console.log(channelExist)
 
-    if (!channelExist) {
-        throw new APIError(401, "Channel Does not exist.")
-    }
+//     if (!channelExist) {
+//         throw new APIError(401, "Channel Does not exist.")
+//     }
 
-    // extract User _id i.e channel ID from channel Exist.
+//     // extract User _id i.e channel ID from channel Exist.
 
-    const channel = channelExist._id;
-    console.log(channel)
+//     const channel = channelExist._id;
+//     console.log(channel)
 
-    const existingSubscriber = await Subscription.findOne({ subscriber: user, channel });
+//     const existingSubscriber = await Subscription.findOne({ subscriber: user, channel });
 
-    if (!existingSubscriber) {
-        throw new APIError(401, "Channel was not subscribed.")
-    }
+//     if (!existingSubscriber) {
+//         throw new APIError(401, "Channel was not subscribed.")
+//     }
 
-    // find by ID and delete the subscriber document.
+//     // find by ID and delete the subscriber document.
 
-    const unSubscribe = await Subscription.findByIdAndDelete(existingSubscriber._id);
-    console.log(unSubscribe);
+//     const unSubscribe = await Subscription.findByIdAndDelete(existingSubscriber._id);
+//     console.log(unSubscribe);
 
-    if (!unSubscribe) {
-        throw new APIError(404, "Subscriber document does not exist")
-    }
+//     if (!unSubscribe) {
+//         throw new APIError(404, "Subscriber document does not exist")
+//     }
 
-    return res
-        .status(200)
-        .json(new APIResponse(201, unSubscribe, "successfully unsubscribed to channel"))
+//     return res
+//         .status(200)
+//         .json(new APIResponse(201, unSubscribe, "successfully unsubscribed to channel"))
 
-})
+// })
 
 
 export {
