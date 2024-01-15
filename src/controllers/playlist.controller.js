@@ -192,7 +192,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     }
 
     const updatePlaylist = await Playlist.findByIdAndUpdate(
-        { _id: playlist._id },
+        playlist._id,
         { $pull: { videos: video._id } },
         { new: true }
     )
@@ -216,12 +216,72 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     if (!user) {
         throw new APIError(401, "kindly login first.")
     }
+
+    const playlist = await Playlist.findOne({ _id: playlistId })
+
+    if (!playlist) {
+        throw new APIError(404, "Playlist not found.")
+    }
+
+    const isOwner = playlist.owner.equals(user._id)
+
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
+    }
+
+    const deletePlaylist = await Playlist.findByIdAndDelete(playlist._id)
+
+    if (!deletePlaylist) {
+        throw new APIError(401, "Something went wrong while deleting the playlist.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, deletePlaylist, "Playlist has been deleted successfully."))
+
+
 })
 
 const updatePlaylist = asyncHandler(async (req, res) => {
+
     const { playlistId } = req.params
     const { name, description } = req.body
-    //TODO: update playlist
+
+    if ([name, description].some((field) => field.trim() === '')) {
+        throw new APIError(401, "All fields are required.")
+    }
+
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(401, "kindly login first.")
+    }
+
+    const playlist = await Playlist.findOne({ _id: playlistId })
+
+    if (!playlist) {
+        throw new APIError(404, "Playlist not found.")
+    }
+
+    const isOwner = playlist.owner.equals(user._id)
+
+    if (!isOwner) {
+        throw new APIError(401, "not authorized.")
+    }
+
+    const updatePlaylist = await Playlist.findByIdAndUpdate(playlist._id, {
+        name: name,
+        description: description
+    }, { new: true })
+
+    if (!updatePlaylist) {
+        throw new APIError(401, "Something went wrong while updating the playlist.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, updatePlaylist, "Playlist has been updated successfully."))
+
 })
 
 export {
