@@ -75,6 +75,53 @@ const getChannelStats = asyncHandler(async (req, res) => {
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
+
+    const user = req.user._id
+
+    if(!user) {
+        throw new APIError(401, "Kindly login First.")
+    }
+
+    try {
+
+        const allVideos = await User.aggregate([
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(user._id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "_id",
+                    foreignField: "owner",
+                    as: "allVideos"
+                }
+            },
+            {
+              $addFields: {
+                totalCount: {
+                    $size: "$allVideos"
+                }
+              }  
+            },
+            {
+                $project:{
+                    allVideos: 1,
+                    totalCount: 1
+                }
+            }
+        ])
+
+        return res
+        .status(200)
+        .json(new APIResponse(200, allVideos, "all videos are fetched successfully."))
+        
+    } catch (error) {
+        throw new APIError(404, error)
+    }
+
+
 })
 
 export {
