@@ -5,13 +5,76 @@ import { Like } from "../models/like.model.js"
 import { APIError } from "../utils/APIError.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
+import { User } from "../models/user.model.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
-    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
+
+    // TODO: total video views, total subscribers, total videos count
+    // total likes etc.
+
+    // total videos count.
+    // const totalVideos = await Video.find({ owner: user._id })
+
+    // const stats = {
+    //     totalVideos: totalVideos.length,
+    //     statsAggregation,
+    // }
+
+    const user = await User.findOne({ _id: req.user._id })
+
+    if (!user) {
+        throw new APIError(404, "Kindly login to see stats.")
+    }
+
+    const statsAggregation = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "_id",
+                foreignField: "owner",
+                as: "allVideos"
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $addFields: {
+                totalVideos: {
+                    $size: "$allVideos"
+                },
+                totalSubscribers: {
+                    $size: "$subscribers"
+                }
+            }
+        },
+        {
+            $project: {
+                allVideos: 1,
+                totalVideos: 1,
+                subscribers: 1,
+                totalSubscribers: 1
+            }
+        }
+    ])
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, statsAggregation, "User Stats retrieved successfully."))
+
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-    // TODO: Get all the videos uploaded by the channel
 })
 
 export {

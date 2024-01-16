@@ -1,4 +1,9 @@
-1. Create Utility to check existence of documents using "_id" //done
-2. fix issues with check existance utility.
-3. fix aggregation pipelines.
-4. crossCheck if we are deleting the items without knowing which one is the owner/user, only the owner/user of certain should be able to delete.
+1. fix aggregation pipelines.
+
+
+todos for  dashboard - 
+
+total video views
+total subscribers
+total videos count - done
+total likes etc.

@@ -104,7 +104,7 @@ const addComment = asyncHandler(async (req, res) => {
         throw new APIError(401, "Comment is required.")
     }
 
-    const owner = await User.findById(req.user?._id)
+    const owner = await User.findOne({ _id: req.user._id })
 
     if (!owner) {
         throw new APIError(401, "Kindly login first to add comment.")
@@ -175,10 +175,10 @@ const deleteComment = asyncHandler(async (req, res) => {
     }
 
     const comment = await Comment.findOne({ _id: commentId })
-    
+
     const isOwner = comment.owner.equals(user._id);
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "Not authorized.")
     }
 
