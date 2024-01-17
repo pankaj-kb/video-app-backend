@@ -1,6 +1,8 @@
 import mongoose from "mongoose"
 import { Video } from "../models/video.model.js"
 import { Subscription } from "../models/subscription.model.js"
+import { Comment } from "../models/comment.model.js"
+import { Tweet } from "../models/tweet.model.js"
 import { Like } from "../models/like.model.js"
 import { APIError } from "../utils/APIError.js"
 import { APIResponse } from "../utils/APIResponse.js"
@@ -26,9 +28,16 @@ const getChannelStats = asyncHandler(async (req, res) => {
         throw new APIError(401, "Kindly login first.")
     }
 
-    const userVideos = await Video.find({ owner: user._id })
+    const userVideos = await Video.find({ owner: user._id });
+    const userComments = await Comment.find({ owner: user._id });
+    const userTweets = await Tweet.find({ owner: user._id });
 
-    const totalLikes = await Like.countDocuments({ video: { $in: userVideos } });
+
+    const totalVideoLikes = await Like.countDocuments({ video: { $in: userVideos } });
+    const totalCommentLikes = await Like.countDocuments({ comment: { $in: userComments } });
+    const totalTweetLikes = await Like.countDocuments({ tweet: { $in: userTweets } });
+
+    const totalLikes = totalCommentLikes+totalTweetLikes+totalVideoLikes
 
     console.log(totalLikes)
 
@@ -136,7 +145,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new APIResponse(200, userStatsAggregation, "User Stats retrieved successfully."))
+        .json(new APIResponse(200, {userStatsAggregation, totalLikes}, "User Stats retrieved successfully."))
 
 })
 
