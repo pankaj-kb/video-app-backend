@@ -3,7 +3,13 @@
 
 todos for  dashboard - 
 
-total video views
-total subscribers
+total video views - done
+total subscribers - done
 total videos count - done
-total likes etc.
+total likes etc - done
+
+steps: -
+
+1. lookup for all the tweets, comments, videos - here you can get total count of all the data (respectively)
+2. then we subscribers
+3. get total likes.

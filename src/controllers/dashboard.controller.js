@@ -20,13 +20,19 @@ const getChannelStats = asyncHandler(async (req, res) => {
     //     statsAggregation,
     // }
 
-    const user = await User.findOne({ _id: req.user._id })
+    const user = await User.findOne(req.user._id)
 
     if (!user) {
-        throw new APIError(404, "Kindly login to see stats.")
+        throw new APIError(401, "Kindly login first.")
     }
 
-    const statsAggregation = await User.aggregate([
+    const userVideos = await Video.find({ owner: user._id })
+
+    const totalLikes = await Like.countDocuments({ video: { $in: userVideos } });
+
+    console.log(totalLikes)
+
+    const userStatsAggregation = await User.aggregate([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(user._id)
@@ -42,6 +48,22 @@ const getChannelStats = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
+                from: "tweets",
+                localField: "_id",
+                foreignField: "owner",
+                as: "allTweets",
+            }
+        },
+        {
+            $lookup: {
+                from: "comments",
+                localField: "_id",
+                foreignField: "owner",
+                as: "allComments"
+            }
+        },
+        {
+            $lookup: {
                 from: "subscriptions",
                 localField: "_id",
                 foreignField: "channel",
@@ -49,28 +71,72 @@ const getChannelStats = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "likedBy",
+                as: "likedVideos",
+                pipeline: [
+                    {
+                        $match: {
+                            video: { $exists: true }
+                        }
+                    }
+                ]
+            }
+        },
+        {
             $addFields: {
                 totalVideos: {
                     $size: "$allVideos"
                 },
+                totalComments: {
+                    $size: "$allComments"
+                },
+                totalTweets: {
+                    $size: "$allTweets"
+                },
+                videoViews: {
+                    $sum: "$allVideos.views"
+                },
                 totalSubscribers: {
                     $size: "$subscribers"
-                }
+                },
+                channelsSubscribedTo: {
+                    $size: "$subscribedTo"
+                },
+                likedVideosCount: {
+                    $size: "$likedVideos"
+                },
             }
         },
         {
             $project: {
-                allVideos: 1,
                 totalVideos: 1,
-                subscribers: 1,
-                totalSubscribers: 1
+                totalComments: 1,
+                totalTweets: 1,
+                videoViews: 1,
+                totalSubscribers: 1,
+                channelsSubscribedTo: 1,
+                likedVideosCount: 1,
+                likedVideos: 1,
+                allVideos: 1,
+                // totalLikes: 1
             }
         }
     ])
 
     return res
         .status(200)
-        .json(new APIResponse(200, statsAggregation, "User Stats retrieved successfully."))
+        .json(new APIResponse(200, userStatsAggregation, "User Stats retrieved successfully."))
 
 })
 
@@ -78,7 +144,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
 
     const user = req.user._id
 
-    if(!user) {
+    if (!user) {
         throw new APIError(401, "Kindly login First.")
     }
 
@@ -99,14 +165,14 @@ const getChannelVideos = asyncHandler(async (req, res) => {
                 }
             },
             {
-              $addFields: {
-                totalCount: {
-                    $size: "$allVideos"
+                $addFields: {
+                    totalCount: {
+                        $size: "$allVideos"
+                    }
                 }
-              }  
             },
             {
-                $project:{
+                $project: {
                     allVideos: 1,
                     totalCount: 1
                 }
@@ -114,9 +180,9 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         ])
 
         return res
-        .status(200)
-        .json(new APIResponse(200, allVideos, "all videos are fetched successfully."))
-        
+            .status(200)
+            .json(new APIResponse(200, allVideos, "all videos are fetched successfully."))
+
     } catch (error) {
         throw new APIError(404, error)
     }
