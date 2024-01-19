@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { APIError } from "../utils/APIError.js"
 import { User } from "../models/user.model.js"
-import { Subscription } from "../models/subscription.model.js"
+// import { Subscription } from "../models/subscription.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { APIResponse } from "../utils/APIResponse.js"
 import fs from "fs"
@@ -132,13 +132,9 @@ const loginUser = asyncHandler(async (req, res) => {
         .status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
-        .json(
-            new APIResponse(200, {
-                user: loggedInUser, accessToken, refreshToken
-            },
-                "User Logged in Successfully"
-            )
-        )
+        .json(new APIResponse(200,
+            { user: loggedInUser, accessToken, refreshToken },
+            "User Logged in Successfully"))
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -237,7 +233,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         throw new APIError(400, "No user found")
     }
 
-    const {_id, username, email} = req.user;
+    const { _id, username, email } = req.user;
 
     return res
         .status(200)
