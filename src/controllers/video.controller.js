@@ -447,6 +447,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 })
 
 export {
+    getAllVideos,
     getAllVideosWithQuery,
     getAllVideosByUser,
     publishAVideo,
