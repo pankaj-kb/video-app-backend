@@ -6,9 +6,77 @@ import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
-//TODO: get all videos based on query, sort, pagination
 
 const getAllVideos = asyncHandler(async (req, res) => {
+
+    const { page, limit, sortBy, sortType } = req.query
+
+    if (!(sortType === "desc" || sortType === "asc")) {
+        throw new APIError(401, "incorrect query, check sorting order.")
+    }
+
+    const allVideosAggregation = [
+        {
+            $sort: {
+                [sortBy]: sortType === 'desc' ? -1 : 1
+            }
+        },
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: parseInt(limit)
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "ownerInfo"
+            }
+        },
+
+        //  Add project to display owner info
+        {
+            $project: {
+                _id: 1,
+                ownerInfo: {
+                    _id: 1,
+                    username: 1,
+                    email: 1,
+                    fullName: 1,
+                    avatar: 1,
+                }
+            }
+        }
+    ]
+
+    const paginatedVideos = await Video.aggregatePaginate(allVideosAggregation, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'videos',
+            totalDocs: 'totalVideos'
+        }
+    })
+
+    if (!paginatedVideos) {
+        throw new APIError(400, "Something went wrong while loading videos.")
+    }
+
+    if (paginatedVideos.totalVideos === 0) {
+        return res
+            .status(400)
+            .json(new APIResponse(400, "No Videos Found."))
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, paginatedVideos, "Fetched all videos for home page."));
+})
+
+const getAllVideosWithQuery = asyncHandler(async (req, res) => {
     const { page, limit, query, sortBy, sortType } = req.query
 
     const searchQuery = query;
@@ -321,7 +389,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
     const isOwner = video.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -353,7 +421,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
     const isOwner = video.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -379,7 +447,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 })
 
 export {
-    getAllVideos,
+    getAllVideosWithQuery,
     getAllVideosByUser,
     publishAVideo,
     getVideoById,

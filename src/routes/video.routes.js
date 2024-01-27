@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
     deleteVideo,
-    getAllVideos,
+    getAllVideosWithQuery,
     getAllVideosByUser,
     getVideoById,
     publishAVideo,
@@ -15,7 +15,7 @@ const router = Router();
 
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
-router.route("/").get(getAllVideos)
+router.route("/search").get(getAllVideosWithQuery)
 
 // test working status
 // router.route("/").get((req,res) => {
