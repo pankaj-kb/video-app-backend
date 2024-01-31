@@ -8,14 +8,40 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-
-    const { page, limit, sortBy, sortType } = req.query
+    const { page, limit, sortBy, sortType } = req.query;
 
     if (!(sortType === "desc" || sortType === "asc")) {
-        throw new APIError(401, "incorrect query, check sorting order.")
+        throw new APIError(401, "incorrect query, check sorting order.");
     }
 
-    const allVideosAggregation = [
+    const allVideosAggregation = Video.aggregate([
+        {
+            $match: {isPublished: true}
+        },
+
+        {
+            $lookup: {
+                from: "users",
+                as:"owner",
+                foreignField:"_id",
+                localField:"owner",
+                pipeline:[
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+              owner: { $arrayElemAt: ["$owner", 0] },
+            },
+          },
+
         {
             $sort: {
                 [sortBy]: sortType === 'desc' ? -1 : 1
@@ -27,29 +53,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $limit: parseInt(limit)
         },
-        {
-            $lookup: {
-                from: "users",
-                localField: "owner",
-                foreignField: "_id",
-                as: "ownerInfo"
-            }
-        },
-
-        //  Add project to display owner info
-        {
-            $project: {
-                _id: 1,
-                ownerInfo: {
-                    _id: 1,
-                    username: 1,
-                    email: 1,
-                    fullName: 1,
-                    avatar: 1,
-                }
-            }
-        }
-    ]
+    ]);
 
     const paginatedVideos = await Video.aggregatePaginate(allVideosAggregation, {
         page: parseInt(page),
@@ -59,22 +63,33 @@ const getAllVideos = asyncHandler(async (req, res) => {
             docs: 'videos',
             totalDocs: 'totalVideos'
         }
-    })
+    });
 
     if (!paginatedVideos) {
-        throw new APIError(400, "Something went wrong while loading videos.")
+        throw new APIError(400, "Something went wrong while loading videos.");
     }
 
-    if (paginatedVideos.totalVideos === 0) {
-        return res
-            .status(400)
-            .json(new APIResponse(400, "No Videos Found."))
-    }
+    // if (paginatedVideos.totalVideos === 0) {
+    //     return res
+    //         .status(400)
+    //         .json(new APIResponse(400, "No Videos Found."));
+    // }
+
+    // const response = {
+    //     status: 200,
+    //     message: "Fetched all videos for home page.",
+    //     data: {
+    //         videos: paginatedVideos.videos,
+    //         totalVideos: paginatedVideos.totalVideos,
+    //         totalPages: paginatedVideos.totalPages,
+    //         currentPage: paginatedVideos.page
+    //     }
+    // };
 
     return res
-        .status(200)
-        .json(new APIResponse(200, paginatedVideos, "Fetched all videos for home page."));
-})
+    .status(200).
+    json(new APIResponse(200, paginatedVideos, "Fetched all the videos."))
+});
 
 const getAllVideosWithQuery = asyncHandler(async (req, res) => {
     const { page, limit, query, sortBy, sortType } = req.query
@@ -86,6 +101,11 @@ const getAllVideosWithQuery = asyncHandler(async (req, res) => {
     }
 
     const allVideosAggregation = [
+        {
+            $match: {
+                isPublished: true
+            }
+        },
         {
             $match: {
                 $or: [{
@@ -120,8 +140,6 @@ const getAllVideosWithQuery = asyncHandler(async (req, res) => {
                 as: "ownerInfo"
             }
         },
-
-        //  Add project to display owner info
         {
             $project: {
                 _id: 1,
