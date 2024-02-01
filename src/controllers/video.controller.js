@@ -312,25 +312,52 @@ const publishAVideo = asyncHandler(async (req, res) => {
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
+
     const { videoId } = req.params
 
-    // console.log(req.params)
-    // console.log(videoId);
+    // old method
+    // const video = await Video.findById(videoId)
 
-    // if (videoId) {
-    //     throw new APIError(401, "Kindly provide videoID.")
+    // if (!video) {
+    //     throw new APIError(404, "Video not found/exist.")
     // }
 
-    const video = await Video.findById(videoId)
-    // console.log(video)
+    const videoAggregation = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                as:"owner",
+                localField: "owner",
+                foreignField: "_id",
+                pipeline:[
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] }
+            }
+        },
+    ])
 
-    if (!video) {
-        throw new APIError(404, "Video not found/exist.")
-    }
+    const aggregatedVideo = videoAggregation[0];
 
     return res
         .status(201)
-        .json(new APIResponse(201, video, "Video Fetched Successfully."))
+        .json(new APIResponse(201, aggregatedVideo, "Video Fetched Successfully."))
 
 })
 
