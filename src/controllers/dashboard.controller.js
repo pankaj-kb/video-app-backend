@@ -11,21 +11,18 @@ import { User } from "../models/user.model.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
 
-    // TODO: total video views, total subscribers, total videos count
-    // total likes etc.
+    const { username } = req.params;
+    console.log("From stats Username: ", username)
+    let user;
 
-    // total videos count.
-    // const totalVideos = await Video.find({ owner: user._id })
-
-    // const stats = {
-    //     totalVideos: totalVideos.length,
-    //     statsAggregation,
-    // }
-
-    const user = await User.findOne(req.user._id)
+    if (username) {
+        user = await User.findOne({ username: username });
+    } else {
+        user = await User.findOne(req.user._id);
+    }
 
     if (!user) {
-        throw new APIError(401, "Kindly login first.")
+        throw new APIError(401, "User not found.");
     }
 
     const userVideos = await Video.find({ owner: user._id });
@@ -37,9 +34,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
     const totalCommentLikes = await Like.countDocuments({ comment: { $in: userComments } });
     const totalTweetLikes = await Like.countDocuments({ tweet: { $in: userTweets } });
 
-    const totalLikes = totalCommentLikes+totalTweetLikes+totalVideoLikes
-
-    console.log(totalLikes)
+    const totalLikes = totalCommentLikes + totalTweetLikes + totalVideoLikes
 
     const userStatsAggregation = await User.aggregate([
         {
@@ -138,6 +133,10 @@ const getChannelStats = asyncHandler(async (req, res) => {
                 likedVideosCount: 1,
                 likedVideos: 1,
                 allVideos: 1,
+                allTweets: 1,
+                // username: 1,
+                // avatar: 1,
+                // fullName: 1,
                 // totalLikes: 1
             }
         }
@@ -145,7 +144,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new APIResponse(200, {userStatsAggregation, totalLikes}, "User Stats retrieved successfully."))
+        .json(new APIResponse(200, { userStatsAggregation, totalLikes }, "User Stats retrieved successfully."))
 
 })
 

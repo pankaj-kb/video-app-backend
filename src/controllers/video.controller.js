@@ -16,21 +16,22 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     const allVideosAggregation = Video.aggregate([
         {
-            $match: {isPublished: true}
+            $match: { isPublished: true }
         },
 
         {
             $lookup: {
                 from: "users",
-                as:"owner",
-                foreignField:"_id",
-                localField:"owner",
-                pipeline:[
+                as: "owner",
+                foreignField: "_id",
+                localField: "owner",
+                pipeline: [
                     {
                         $project: {
                             _id: 1,
                             username: 1,
                             avatar: 1,
+                            fullName: 1
                         }
                     }
                 ]
@@ -38,9 +39,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-              owner: { $arrayElemAt: ["$owner", 0] },
+                owner: { $arrayElemAt: ["$owner", 0] },
             },
-          },
+        },
 
         {
             $sort: {
@@ -87,8 +88,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     // };
 
     return res
-    .status(200).
-    json(new APIResponse(200, paginatedVideos, "Fetched all the videos."))
+        .status(200).
+        json(new APIResponse(200, paginatedVideos, "Fetched all the videos."))
 });
 
 const getAllVideosWithQuery = asyncHandler(async (req, res) => {
@@ -331,10 +332,10 @@ const getVideoById = asyncHandler(async (req, res) => {
         {
             $lookup: {
                 from: "users",
-                as:"owner",
+                as: "owner",
                 localField: "owner",
                 foreignField: "_id",
-                pipeline:[
+                pipeline: [
                     {
                         $project: {
                             _id: 1,

@@ -94,12 +94,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { username, email, password } = req.body;
 
-    // console.log({ "username": username, "email": email })
-
-    // if (!username && !email) {
-    //     throw new APIError(400, "username or email is required")
-    // }
-
     if (!(username || email)) {
         throw new APIError(400, "username or email is required")
     }
@@ -233,11 +227,32 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         throw new APIError(400, "No user found")
     }
 
-    const { _id, username, email } = req.user;
+    const { _id, username, email, avatar, fullName } = req.user;
 
     return res
         .status(200)
-        .json(new APIResponse(200, { _id, username, email }, "User Fetched Successfully."))
+        .json(new APIResponse(200, { _id, username, email, avatar, fullName }, "User Fetched Successfully."))
+})
+
+const getUser = asyncHandler(async(req, res) => {
+
+    const {username} = req.params;
+    console.log("from getUser: ", username)
+
+    if(!username) {
+        throw new APIError(401, "Kindly provide Username.")
+    }
+
+    const user = await User.findOne({username:username}).select("-password -refreshToken")
+    
+    if(!user) {
+        throw new APIError(401, "User does not exist.")
+    }
+
+    return res
+    .status(200)
+    .json(new APIResponse(200, user, "user object fetched succesfully."))
+
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -587,4 +602,5 @@ export {
     checkChannelExist,
     // subscribeToChannel,
     // unSubscribeToChannel,
+    getUser,
 }
