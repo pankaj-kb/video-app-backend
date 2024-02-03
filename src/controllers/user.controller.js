@@ -227,31 +227,31 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         throw new APIError(400, "No user found")
     }
 
-    const { _id, username, email, avatar, fullName } = req.user;
+    const user = req.user
 
     return res
         .status(200)
-        .json(new APIResponse(200, { _id, username, email, avatar, fullName }, "User Fetched Successfully."))
+        .json(new APIResponse(200, { user }, "User fetched successfully"))
 })
 
-const getUser = asyncHandler(async(req, res) => {
+const getUser = asyncHandler(async (req, res) => {
 
-    const {username} = req.params;
+    const { username } = req.params;
     console.log("from getUser: ", username)
 
-    if(!username) {
+    if (!username) {
         throw new APIError(401, "Kindly provide Username.")
     }
 
-    const user = await User.findOne({username:username}).select("-password -refreshToken")
-    
-    if(!user) {
+    const user = await User.findOne({ username: username }).select("-password -refreshToken")
+
+    if (!user) {
         throw new APIError(401, "User does not exist.")
     }
 
     return res
-    .status(200)
-    .json(new APIResponse(200, user, "user object fetched succesfully."))
+        .status(200)
+        .json(new APIResponse(200, user, "user object fetched succesfully."))
 
 })
 
@@ -496,97 +496,6 @@ const checkChannelExist = asyncHandler(async (req, res) => {
 
 })
 
-// const subscribeToChannel = asyncHandler(async (req, res) => {
-
-//     const user = await User.findById(req.user?._id)
-
-//     if (!user) {
-//         throw new APIError(400, "kindly login to subscribe")
-//     }
-
-//     const { username } = req.params
-
-//     if (!username) {
-//         throw new APIError(401, "Channel not found.")
-//     }
-
-//     // check if channel/user exist in database
-
-//     const channelExist = await User.findOne({ username })
-//     console.log(channelExist)
-
-//     if (!channelExist) {
-//         throw new APIError(401, "Channel Does not exist.")
-//     }
-
-//     // extract User _id i.e channel ID from channel Exist.
-
-//     const channel = channelExist._id;
-//     console.log(channel)
-
-//     // subscribe to channel
-
-//     const subscriber = await Subscription.create({
-//         subscriber: user,
-//         channel: channel
-//     })
-
-//     if (!subscriber) {
-//         throw new APIError(500,
-//             "Something went wrong while subscribing to channel")
-//     }
-
-//     return res.status(201).json(new APIResponse(200, "User successfully subscribed to channel"))
-// })
-
-// const unSubscribeToChannel = asyncHandler(async (req, res) => {
-
-//     const user = await User.findById(req.user?._id)
-
-//     if (!user) {
-//         throw new APIError(400, "kindly login first")
-//     }
-
-//     const { username } = req.params
-
-//     if (!username) {
-//         throw new APIError(401, "Channel not found.")
-//     }
-
-//     const channelExist = await User.findOne({ username })
-//     console.log(channelExist)
-
-//     if (!channelExist) {
-//         throw new APIError(401, "Channel Does not exist.")
-//     }
-
-//     // extract User _id i.e channel ID from channel Exist.
-
-//     const channel = channelExist._id;
-//     console.log(channel)
-
-//     const existingSubscriber = await Subscription.findOne({ subscriber: user, channel });
-
-//     if (!existingSubscriber) {
-//         throw new APIError(401, "Channel was not subscribed.")
-//     }
-
-//     // find by ID and delete the subscriber document.
-
-//     const unSubscribe = await Subscription.findByIdAndDelete(existingSubscriber._id);
-//     console.log(unSubscribe);
-
-//     if (!unSubscribe) {
-//         throw new APIError(404, "Subscriber document does not exist")
-//     }
-
-//     return res
-//         .status(200)
-//         .json(new APIResponse(201, unSubscribe, "successfully unsubscribed to channel"))
-
-// })
-
-
 export {
     registerUser,
     loginUser,
@@ -600,7 +509,5 @@ export {
     getUserChannelProfile,
     getWatchHistory,
     checkChannelExist,
-    // subscribeToChannel,
-    // unSubscribeToChannel,
     getUser,
 }
