@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose, { Mongoose, isValidObjectId } from "mongoose"
 import { Tweet } from "../models/tweet.model.js"
 import { User } from "../models/user.model.js"
 import { APIError } from "../utils/APIError.js"
@@ -110,6 +110,53 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 })
 
+const getTweet = asyncHandler(async (req, res) => {
+
+    const { tweetId } = req.params;
+
+    const tweet = await Tweet.findOne({ _id: tweetId })
+
+    if (!tweet) {
+        throw new APIError(404, "Tweet does not exist")
+    }
+
+    const tweetAggregation = await Tweet.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                localField: "owner",
+                foreignField: "_id",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] }
+            }
+        },
+    ])
+
+    const aggregatedTweet = tweetAggregation[0]
+    return res
+        .status(200)
+        .json(new APIResponse(201, aggregatedTweet, "Tweet fetched Successfully."))
+})
+
 const deleteTweet = asyncHandler(async (req, res) => {
 
     const user = await User.findOne({ _id: req.user._id })
@@ -210,5 +257,6 @@ export {
     getUserTweets,
     updateTweet,
     deleteTweet,
-    getAllTweets
+    getAllTweets,
+    getTweet,
 }

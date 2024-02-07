@@ -316,13 +316,6 @@ const getVideoById = asyncHandler(async (req, res) => {
 
     const { videoId } = req.params
 
-    // old method
-    // const video = await Video.findById(videoId)
-
-    // if (!video) {
-    //     throw new APIError(404, "Video not found/exist.")
-    // }
-
     const videoAggregation = await Video.aggregate([
         {
             $match: {
