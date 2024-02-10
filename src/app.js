@@ -27,6 +27,7 @@ import likeRouter from "./routes/like.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
 import healhcheckRouter from "./routes/healthcheck.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
+import searchRouter from "./routes/search.routes.js"
 
 // routes
 
@@ -70,5 +71,7 @@ app.use("/api/v1/playlist", playlistRouter)
 // Dashboard Route
 
 app.use("/api/v1/dashboard", dashboardRouter)
+
+app.use("/api/v1/search", searchRouter)
 
 export { app }
