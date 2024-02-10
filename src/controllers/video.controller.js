@@ -14,7 +14,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         throw new APIError(401, "incorrect query, check sorting order.");
     }
 
-    const allVideosAggregation = await Video.aggregate([
+    const allVideosAggregation = Video.aggregate([
         {
             $match: { isPublished: true }
         },
@@ -85,7 +85,7 @@ const getAllVideosWithQuery = asyncHandler(async (req, res) => {
     }
 
 
-    const allVideosAggregation = await Video.aggregate([
+    const allVideosAggregation = Video.aggregate([
         {
             $match: {
                 isPublished: true,
