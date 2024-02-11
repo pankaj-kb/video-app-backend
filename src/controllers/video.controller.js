@@ -162,8 +162,6 @@ const getAllVideosWithQuery = asyncHandler(async (req, res) => {
         .json(new APIResponse(200, paginatedVideos, "all Videos with matching query fetched"));
 })
 
-// get all videos by the user without the query like the userpage
-
 // TOdo: Automate pagination here as well.
 
 const getAllVideosByUser = asyncHandler(async (req, res) => {
@@ -422,7 +420,6 @@ const deleteVideo = asyncHandler(async (req, res) => {
         .json(new APIResponse(201, deleteVideo, "Video Deleted Successfully."))
 })
 
-// Change publish status of Video.
 const togglePublishStatus = asyncHandler(async (req, res) => {
     // add validation that comment. is owned by logged in user.
     const { videoId } = req.params
