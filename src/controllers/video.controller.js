@@ -302,6 +302,13 @@ const getVideoById = asyncHandler(async (req, res) => {
             }
         },
         {
+            $addFields: {
+                views: {
+                    $size: "$views"
+                },
+            }
+        },
+        {
             $lookup: {
                 from: "users",
                 as: "owner",

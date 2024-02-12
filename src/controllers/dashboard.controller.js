@@ -109,7 +109,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
                     $size: "$allTweets"
                 },
                 videoViews: {
-                    $sum: "$allVideos.views"
+                    $size: "$allVideos.views"
                 },
                 totalSubscribers: {
                     $size: "$subscribers"
