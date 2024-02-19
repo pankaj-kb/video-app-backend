@@ -124,8 +124,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        // .cookie("accessToken", accessToken, options)
+        // .cookie("refreshToken", refreshToken, options)
         .json(new APIResponse(200,
             { user: loggedInUser, accessToken, refreshToken },
             "User Logged in Successfully"))
@@ -150,8 +150,8 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options)
+        // .clearCookie("accessToken", options)
+        // .clearCookie("refreshToken", options)
         .json(
             new APIResponse(200, {}, "User is logged out successfully")
         )
@@ -237,7 +237,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const getUser = asyncHandler(async (req, res) => {
 
     const { username } = req.params;
-    console.log("from getUser: ", username)
 
     if (!username) {
         throw new APIError(401, "Kindly provide Username.")
@@ -416,86 +415,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         .json(new APIResponse(200, channel[0], "User channel successfully Fetched."))
 })
 
-const getWatchHistory = asyncHandler(async (req, res) => {
-
-    const user = await User.aggregate(
-        [
-            {
-                $match: {
-                    _id: new mongoose.Types.ObjectId(req.user._id)
-                }
-            },
-            {
-                $lookup: {
-                    from: "videos",
-                    localField: "watchHistory",
-                    foreignField: "_id",
-                    as: "watchHistory",
-                    pipeline: [
-                        {
-                            $lookup: {
-                                from: "users",
-                                localField: "owner",
-                                foreignField: "_id",
-                                as: "owner",
-                                pipeline: [
-                                    {
-                                        $project: {
-                                            fullName: 1,
-                                            username: 1,
-                                            avatar: 1
-                                        }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            $addFields: {
-                                owner: {
-                                    $first: "$owner"
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        ]
-    )
-
-    return res
-        .status(200)
-        .json(
-            new APIResponse(200, user[0].watchHistory,
-                "Watch history fetched successfully."
-            )
-        )
-
-})
-
-const checkChannelExist = asyncHandler(async (req, res) => {
-
-    const { username } = req.params
-
-    if (!username) {
-        throw new APIError(400, "username not found")
-    }
-
-    const channelCheck = await User.findOne({ username })
-    console.log(channelCheck);
-
-    if (!channelCheck) {
-        throw new APIError(401, "Channel not found using username in DB")
-    }
-
-    const channel = channelCheck._id
-    console.log(channel);
-
-    return res
-        .status(200)
-        .json(201, channel, "Channel Fetched successfully")
-
-})
-
 export {
     registerUser,
     loginUser,
@@ -507,7 +426,5 @@ export {
     updateUserAvatar,
     updateCoverImage,
     getUserChannelProfile,
-    getWatchHistory,
-    checkChannelExist,
     getUser,
 }
