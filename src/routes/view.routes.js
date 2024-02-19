@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getWatchHistory, addView } from "../controllers/view.controller.js"
+import { addView, getWatchHistory } from "../controllers/view.controller.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();

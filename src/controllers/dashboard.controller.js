@@ -12,9 +12,7 @@ import { User } from "../models/user.model.js"
 const getChannelStats = asyncHandler(async (req, res) => {
 
     const { username } = req.params;
-    console.log("From stats Username: ", username)
     let user;
-
     if (username) {
         user = await User.findOne({ username: username });
     } else {

@@ -8,6 +8,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
+    
     const { page, limit, sortBy, sortType } = req.query;
 
     if (!(sortType === "desc" || sortType === "asc")) {
@@ -18,7 +19,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $match: { isPublished: true }
         },
-
         {
             $lookup: {
                 from: "users",

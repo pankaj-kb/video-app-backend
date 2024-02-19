@@ -31,6 +31,14 @@ const addView = asyncHandler(async (req, res) => {
 
     if (!updateVideo) throw new APIError(401, "Something went wrong while updating video view array.")
 
+    const addToWatchHistory = await User.findByIdAndUpdate(
+        req.user._id,
+        { $push: { watchHistory: video } },
+        { new: true }
+    );
+
+    if (!addToWatchHistory) throw new APIError(401, "Something went wrong while updating watch-history.")
+
     return res
         .status(200)
         .json(new APIResponse(200, createView, "Video view updated successfully."))
@@ -39,13 +47,95 @@ const addView = asyncHandler(async (req, res) => {
 
 const getWatchHistory = asyncHandler(async (req, res) => {
 
+    const { page, limit, sortBy, sortType } = req.query;
+
+    if (!(sortType === "desc" || sortType === "asc")) {
+        throw new APIError(401, "incorrect query, check sorting order.");
+    }
+
+    const allViewsAggregation = View.aggregate([
+        {
+            $match: { viewer: req.user._id }
+        },
+        {
+            $sort: {
+                createdAt: sortType === 'desc' ? -1 : 1
+            }
+        },
+        {
+            $group: {
+                _id: "$video",
+                latestView: { $first: "$$ROOT" }
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "latestView.video",
+                foreignField: "_id",
+                as: "video"
+            }
+        },
+        {
+            $addFields: {
+                video: { $arrayElemAt: ["$video", 0] },
+            },
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "video.owner",
+                foreignField: "_id",
+                as: "video.owner",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            avatar: 1,
+                            fullName: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                "video.owner": { $arrayElemAt: ["$video.owner", 0] },
+            },
+        },
+        {
+            $sort: {
+                "latestView.createdAt": sortType === 'desc' ? -1 : 1
+            }
+        },
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: parseInt(limit)
+        },
+    ]);
 
 
+    const watchHistoryPagination = await View.aggregatePaginate(allViewsAggregation, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'videos',
+            totalDocs: 'totalVideos'
+        }
+    })
+    if (!watchHistoryPagination) {
+        throw new APIError(400, "Something went wrong while loading videos.");
+    }
 
     return res
-        .status(200)
-        .json(new APIResponse(200, {}, "Watch History Fetched."))
-})
+        .status(200).
+        json(new APIResponse(200, watchHistoryPagination, "Fetched all the videos."))
+});
+
 
 export {
     addView,
