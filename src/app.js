@@ -3,10 +3,11 @@ import cors from "cors"
 import cookieParser from "cookie-parser";
 
 const app = express();
-
+const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.2:5173'];
 // setting cors
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
+    // origin: process.env.CORS_ORIGIN,
+    origin: allowedOrigins,
     credentials: true
 }))
 
