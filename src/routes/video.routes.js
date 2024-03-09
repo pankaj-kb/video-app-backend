@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import {
     deleteVideo,
-    getAllVideos,
+    getAllVideosWithQuery,
     getAllVideosByUser,
     getVideoById,
     publishAVideo,
     togglePublishStatus,
     updateVideo,
+    getAllVideos
 } from "../controllers/video.controller.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js"
 import { upload } from "../middlewares/multer.js";
@@ -16,6 +17,8 @@ const router = Router();
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
 router.route("/").get(getAllVideos)
+
+router.route("/search").get(getAllVideosWithQuery)
 
 // test working status
 // router.route("/").get((req,res) => {

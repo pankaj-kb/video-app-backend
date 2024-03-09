@@ -3,10 +3,11 @@ import cors from "cors"
 import cookieParser from "cookie-parser";
 
 const app = express();
-
+// const allowedOrigins = ['http://localhost:5173', 'http://192.168.1.2:5173'];
 // setting cors
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
+    origin: allowedOrigins,
     credentials: true
 }))
 
@@ -27,6 +28,8 @@ import likeRouter from "./routes/like.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
 import healhcheckRouter from "./routes/healthcheck.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
+import searchRouter from "./routes/search.routes.js"
+import viewRouter from "./routes/view.routes.js"
 
 // routes
 
@@ -70,5 +73,13 @@ app.use("/api/v1/playlist", playlistRouter)
 // Dashboard Route
 
 app.use("/api/v1/dashboard", dashboardRouter)
+
+// Search Route
+
+app.use("/api/v1/search", searchRouter)
+
+// View Router
+
+app.use("/api/v1/view", viewRouter)
 
 export { app }

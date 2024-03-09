@@ -62,7 +62,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const channel = await User.findOne({ _id: channelId })
 
     if (!channel) {
-        throw new APIError(404, "Channel/User does not exist.")
+        throw new APIError(404, "User does not exist.")
     }
 
     const subscribers = await Subscription.aggregate([
@@ -102,7 +102,9 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 
     if (subscribers.length === 0) {
-        return res.status(200).json(new APIResponse(200, null, "No subscribers found."))
+        return res
+        .status(200)
+        .json(new APIResponse(200, null, "No subscribers found."))
     }
 
     return res
@@ -118,7 +120,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     const user = await User.findOne({ _id: subscriberId })
 
     if (!user) {
-        throw new APIError(404, "User/Subscriber does not exist.")
+        throw new APIError(404, "User does not exist.")
     }
 
     const subscribedToList = await Subscription.aggregate([
@@ -154,6 +156,12 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     // const subscribedToList = await Subscription.find({
     //     subscriber: user._id
     // })
+
+    if(subscribedToList.length === 0) {
+        return res
+        .status(200)
+        .json(new APIResponse(201, null, "No channels Subscribed !"))
+    }
 
     return res
         .status(200)

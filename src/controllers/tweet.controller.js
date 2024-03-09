@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose, { Mongoose, isValidObjectId } from "mongoose"
 import { Tweet } from "../models/tweet.model.js"
 import { User } from "../models/user.model.js"
 import { APIError } from "../utils/APIError.js"
@@ -72,8 +72,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
-    
-    const user = await User.findOne({_id: req.user._id})
+
+    const user = await User.findOne({ _id: req.user._id })
 
     if (!user) {
         throw new APIError(401, "Kindly login first.")
@@ -89,7 +89,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 
     const isOwner = prevTweet.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -110,9 +110,56 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 })
 
+const getTweet = asyncHandler(async (req, res) => {
+
+    const { tweetId } = req.params;
+
+    const tweet = await Tweet.findOne({ _id: tweetId })
+
+    if (!tweet) {
+        throw new APIError(404, "Tweet does not exist")
+    }
+
+    const tweetAggregation = await Tweet.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                localField: "owner",
+                foreignField: "_id",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] }
+            }
+        },
+    ])
+
+    const aggregatedTweet = tweetAggregation[0]
+    return res
+        .status(200)
+        .json(new APIResponse(201, aggregatedTweet, "Tweet fetched Successfully."))
+})
+
 const deleteTweet = asyncHandler(async (req, res) => {
-    
-    const user = await User.findOne({_id: req.user._id})
+
+    const user = await User.findOne({ _id: req.user._id })
 
     if (!user) {
         throw new APIError(401, "Kindly login first.")
@@ -128,7 +175,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
     const isOwner = tweet.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -143,9 +190,73 @@ const deleteTweet = asyncHandler(async (req, res) => {
         .json(new APIResponse(201, deleteTweet, "tweet has been deleted."))
 })
 
+const getAllTweets = asyncHandler(async (req, res) => {
+
+    const { page, limit, sortBy, sortType } = req.query;
+
+    if (!(sortType === "desc" || sortType === "asc")) {
+        throw new APIError(401, "incorrect query, check sorting order.");
+    }
+
+    const allTweetsAggregation = Tweet.aggregate([
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                foreignField: "_id",
+                localField: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] }
+            }
+        },
+        {
+            $sort: {
+                [sortBy]: sortType === 'desc' ? -1 : 1
+            }
+        },
+        {
+            $limit: parseInt(limit)
+        },
+    ])
+
+    const paginatedTweets = await Tweet.aggregatePaginate(allTweetsAggregation, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'tweets',
+            totalDocs: 'totalTweets'
+        }
+    });
+
+    if (!paginatedTweets) {
+        throw new APIError(400, "Something went wrong while loading tweets.")
+    }
+
+    return res
+        .status(200)
+        .json(new APIResponse(200, paginatedTweets, "fetched all tweets."))
+
+})
+
 export {
     createTweet,
     getUserTweets,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    getAllTweets,
+    getTweet,
 }

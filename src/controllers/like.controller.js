@@ -131,7 +131,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 }
 )
 
-const getLikedVideos = asyncHandler(async (req, res) => {
+const getLikedPosts = asyncHandler(async (req, res) => {
 
     const user = req.user
 
@@ -147,17 +147,17 @@ const getLikedVideos = asyncHandler(async (req, res) => {
 
     // Classic Approach
     
-    const likedVideos = await Like.find({ likedBy: user._id })
+    const likedPosts = await Like.find({ likedBy: user._id })
 
-    if (likedVideos.length === 0) {
+    if (likedPosts.length === 0) {
         return res
             .status(200)
-            .json(new APIResponse(200, null, "No Videos Found."))
+            .json(new APIResponse(200, null, "No Liked Posts Found."))
     }
 
     return res
         .status(201)
-        .json(new APIResponse(201, likedVideos, "Successfully fetched all the liked Videos."))
+        .json(new APIResponse(201, likedPosts, "Successfully fetched all the liked Posts."))
 
 })
 
@@ -165,5 +165,5 @@ export {
     toggleCommentLike,
     toggleTweetLike,
     toggleVideoLike,
-    getLikedVideos
+    getLikedPosts
 }

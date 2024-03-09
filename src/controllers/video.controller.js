@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose"
+import mongoose from "mongoose"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 import { APIError } from "../utils/APIError.js"
@@ -6,33 +6,43 @@ import { APIResponse } from "../utils/APIResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
-//TODO: get all videos based on query, sort, pagination
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page, limit, query, sortBy, sortType } = req.query
-
-    const searchQuery = query;
+    
+    const { page, limit, sortBy, sortType } = req.query;
 
     if (!(sortType === "desc" || sortType === "asc")) {
-        throw new APIError(401, "Incorrect query");
+        throw new APIError(401, "incorrect query, check sorting order.");
     }
 
-    const allVideosAggregation = [
+    const allVideosAggregation = Video.aggregate([
         {
-            $match: {
-                $or: [{
-                    title: {
-                        $regex: new RegExp(searchQuery, 'i')
+            $match: { isPublished: true }
+        },
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                foreignField: "_id",
+                localField: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            avatar: 1,
+                            fullName: 1
+                        }
                     }
-                },
-                {
-                    description: {
-                        $regex: new RegExp(searchQuery, 'i')
-                    }
-                }
                 ]
             }
         },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] },
+            },
+        },
+
         {
             $sort: {
                 [sortBy]: sortType === 'desc' ? -1 : 1
@@ -44,30 +54,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
             $limit: parseInt(limit)
         },
-        {
-            $lookup: {
-                from: "users",
-                localField: "owner",
-                foreignField: "_id",
-                as: "ownerInfo"
-            }
-        },
-
-        //  Add project to display owner info
-        {
-            $project: {
-                _id: 1,
-                ownerInfo: {
-                    _id: 1,
-                    username: 1,
-                    email: 1,
-                    fullName: 1,
-                    avatar: 1,
-                }
-            }
-        }
-
-    ]
+    ]);
 
     const paginatedVideos = await Video.aggregatePaginate(allVideosAggregation, {
         page: parseInt(page),
@@ -77,7 +64,88 @@ const getAllVideos = asyncHandler(async (req, res) => {
             docs: 'videos',
             totalDocs: 'totalVideos'
         }
-    })
+    });
+
+    if (!paginatedVideos) {
+        throw new APIError(400, "Something went wrong while loading videos.");
+    }
+
+    return res
+        .status(200).
+        json(new APIResponse(200, paginatedVideos, "Fetched all the videos."))
+});
+
+const getAllVideosWithQuery = asyncHandler(async (req, res) => {
+    const { page, limit, query, sortBy, sortType } = req.query
+
+    console.log("req.query: ", req.query)
+
+    if (!(sortType === "desc" || sortType === "asc")) {
+        throw new APIError(401, "Incorrect query");
+    }
+
+
+    const allVideosAggregation = Video.aggregate([
+        {
+            $match: {
+                isPublished: true,
+                $or: [
+                    {
+                        title: { $regex: query, $options: 'i' }
+                    },
+                    {
+                        description: { $regex: query, $options: 'i' }
+                    }
+                ]
+            }
+        },
+
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                foreignField: "_id",
+                localField: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            avatar: 1,
+                            fullName: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] },
+            },
+        },
+
+        {
+            $sort: {
+                [sortBy]: sortType === 'desc' ? -1 : 1
+            }
+        },
+        {
+            $skip: (page - 1) * limit
+        },
+        {
+            $limit: parseInt(limit)
+        },
+    ]);
+
+    const paginatedVideos = await Video.aggregatePaginate(allVideosAggregation, {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        sort: { [sortBy]: sortType === 'desc' ? -1 : 1 },
+        customLabels: {
+            docs: 'videos',
+            totalDocs: 'totalVideos'
+        }
+    });
 
     if (!paginatedVideos) {
         throw new APIError(400, "Something went wrong while loading videos.")
@@ -91,10 +159,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new APIResponse(200, paginatedVideos, "all Videos fetched"));
+        .json(new APIResponse(200, paginatedVideos, "all Videos with matching query fetched"));
 })
-
-// get all videos by the user without the query like the userpage
 
 // TOdo: Automate pagination here as well.
 
@@ -226,25 +292,52 @@ const publishAVideo = asyncHandler(async (req, res) => {
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
+
     const { videoId } = req.params
 
-    // console.log(req.params)
-    // console.log(videoId);
+    const videoAggregation = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $addFields: {
+                views: {
+                    $size: "$views"
+                },
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                as: "owner",
+                localField: "owner",
+                foreignField: "_id",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                owner: { $arrayElemAt: ["$owner", 0] }
+            }
+        },
+    ])
 
-    // if (videoId) {
-    //     throw new APIError(401, "Kindly provide videoID.")
-    // }
-
-    const video = await Video.findById(videoId)
-    // console.log(video)
-
-    if (!video) {
-        throw new APIError(404, "Video not found/exist.")
-    }
+    const aggregatedVideo = videoAggregation[0];
 
     return res
         .status(201)
-        .json(new APIResponse(201, video, "Video Fetched Successfully."))
+        .json(new APIResponse(201, aggregatedVideo, "Video Fetched Successfully."))
 
 })
 
@@ -321,7 +414,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
     const isOwner = video.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -334,7 +427,6 @@ const deleteVideo = asyncHandler(async (req, res) => {
         .json(new APIResponse(201, deleteVideo, "Video Deleted Successfully."))
 })
 
-// Change publish status of Video.
 const togglePublishStatus = asyncHandler(async (req, res) => {
     // add validation that comment. is owned by logged in user.
     const { videoId } = req.params
@@ -353,7 +445,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
     const isOwner = video.owner.equals(user._id)
 
-    if(!isOwner) {
+    if (!isOwner) {
         throw new APIError(401, "not authorized.")
     }
 
@@ -380,6 +472,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
 export {
     getAllVideos,
+    getAllVideosWithQuery,
     getAllVideosByUser,
     publishAVideo,
     getVideoById,
